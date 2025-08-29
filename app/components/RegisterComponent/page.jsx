@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { createCliente, createProfissional } from "../services/api";
-import api from "../services/api";
+import { createCliente, createProfissional } from "../../services/api";
+import api from "../../services/api";
 
 export default function RegisterComponent() {
   const [tipo, setTipo] = useState("cliente");
