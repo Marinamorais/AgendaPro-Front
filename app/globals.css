@@ -19,3 +19,18 @@ As regras definidas aqui são úteis para garantir uma aparência consistente e 
   --color-neutral-light: #F5F7FA;
   --color-text: #2A3342;
 }
+
+html {
+  scroll-behavior: smooth;
+}
+
+a {
+  color: var(--color-primary-accent);
+  text-decoration: none;
+  transition: 0.3s ease;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #00b28e;
+}
