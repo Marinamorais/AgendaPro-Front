@@ -63,7 +63,7 @@ export default function Home() {
     {
       question: "Preciso saber de tecnologia para usar?",
       answer:
-        "Não! O CRMlytics foi criado para ser extremamente simples. Você conecta seu WhatsApp e Instagram em 30 segundos e tudo funciona automaticamente.",
+        "Não! O OiAgendaPro foi criado para ser extremamente simples. Você conecta seu WhatsApp e Instagram em 30 segundos e tudo funciona automaticamente.",
     },
     {
       question: "Posso cancelar quando quiser?",
@@ -90,38 +90,27 @@ export default function Home() {
   const plans = [
     {
       name: "Starter",
-      price: "R$ 67/mês",
+      price: "R$ 29.99/mês",
       description: "Ideal para profissionais autônomos",
       features: [
-        "Até 300 conversas/mês",
-        "WhatsApp + Instagram",
-        "Dashboard básico",
-        "Suporte por email",
+        "Até 2 usuários por estabelecimento",
       ],
     },
     {
       name: "Profissional",
-      price: "R$ 127/mês",
+      price: "R$ 54/mês",
       description: "Perfeito para salões pequenos e médios",
       features: [
-        "Conversas ilimitadas",
-        "WhatsApp + Instagram + Facebook",
-        "Insights avançados + relatórios",
-        "Lembretes automáticos",
-        "Suporte prioritário WhatsApp",
+        "Até 5 usuários por estabelecimento",
       ],
       popular: true,
     },
     {
       name: "Premium",
-      price: "R$ 247/mês",
+      price: "R$ 83/mês",
       description: "Para salões que querem dominar o mercado",
       features: [
-        "Tudo do Profissional +",
-        "Multi-usuários (até 3)",
-        "API para integrações",
-        "Relatórios personalizados",
-        "Suporte telefônico",
+        "Multi-usuários (até 10)",
       ],
     },
   ];
@@ -139,7 +128,7 @@ export default function Home() {
       name: "Carla Ferreira",
       business: "Salon Premium",
       feedback:
-        "Aumentei 40% o retorno dos clientes só seguindo os insights do CRMlytics",
+        "Aumentei 40% o retorno dos clientes só seguindo os insights do OiAgendaPro",
       rating: 5,
       avatar: "C",
     },
@@ -168,11 +157,11 @@ export default function Home() {
 
       <section className={styles.comparison}>
         <h2>Antes vs Depois</h2>
-        <p>Veja a transformação que o CRMlytics traz para seu salão</p>
+        <p>Veja a transformação que o OiAgendaPro traz para seu salão</p>
         <div className={styles.comparisonGrid}>
           <div className={styles.comparisonCard}>
             <h3 className={styles.comparisonTitle}>
-              <span className={styles.badIcon}>✖</span> ANTES (Sem CRMlytics)
+              <span className={styles.badIcon}>✖</span> ANTES (Sem OiAgendaPro)
             </h3>
             <ul>
               {antes.map((item, index) => (
@@ -184,7 +173,7 @@ export default function Home() {
           </div>
           <div className={styles.comparisonCard}>
             <h3 className={styles.comparisonTitle}>
-              <span className={styles.goodIcon}>✔</span> DEPOIS (Com CRMlytics)
+              <span className={styles.goodIcon}>✔</span> DEPOIS (Com OiAgendaPro)
             </h3>
             <ul>
               {depois.map((item, index) => (
@@ -264,7 +253,7 @@ export default function Home() {
       {/* Perguntas Frequentes */}
       <section className={styles.faq}>
         <h2>Perguntas Frequentes</h2>
-        <p>Tire suas dúvidas sobre o CRMlytics</p>
+        <p>Tire suas dúvidas sobre o OiAgendaPro</p>
         <div className={styles.faqList}>
           {faqs.map((faq, index) => (
             <div key={index} className={styles.faqItem}>
