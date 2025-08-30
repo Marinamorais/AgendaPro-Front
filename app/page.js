@@ -274,6 +274,12 @@ export default function Home() {
           ))}
         </div>
       </section>
+      <section className={styles.ultima}>
+        <h2>Chegou a hora de lotar sua agenda com inteligência</h2>
+        <p>Não perca a oportunidade de transformar seu salão!</p>
+        <button className={styles.ultimaButton}>Teste grátis agora</button>
+        <span className={styles.ultimaInfo}>14 dias grátis • Sem cartão • Cancele quando quiser</span>
+      </section>
     </div>
   );
 }
