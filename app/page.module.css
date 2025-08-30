@@ -5,6 +5,114 @@
   text-align: center;
 }
 
+.cards {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 250px;
+  text-align: center;
+}
+
+.icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.cardTitle {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.cardDescription {
+  font-size: 1rem;
+  color: #555;
+}
+
+.comparison {
+  margin-top: 40px;
+}
+
+.comparisonGrid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.comparisonCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 300px;
+  text-align: left;
+}
+
+.comparisonTitle {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.badIcon {
+  color: #ef4444;
+}
+
+.goodIcon {
+  color: #10b981;
+}
+
+.badItem {
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.goodItem {
+  color: #10b981;
+  margin-bottom: 8px;
+}
+
+.steps {
+  margin-top: 40px;
+}
+
+.stepsGrid {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stepCard {
+  background: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 250px;
+  text-align: center;
+}
+
+.stepNumber {
+  background: linear-gradient(135deg, #7c3aed, #22d3ee);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
 .faq {
   margin-top: 40px;
 }
