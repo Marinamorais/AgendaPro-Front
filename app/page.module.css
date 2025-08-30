@@ -1,10 +1,10 @@
 /* page.module.css */
 
-/* ===== RESET BÁSICO ===== */
+/* ===== CONTAINER ===== */
 .container {
   font-family: "Inter", sans-serif;
-  color: #222;
-  background: #fff;
+  color: var(--color-text);
+  background: var(--color-neutral-white);
   display: flex;
   flex-direction: column;
   gap: 4rem;
@@ -17,10 +17,10 @@
 .hero {
   text-align: center;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, #c95656, #f18c8c);
-  color: white;
+  background: linear-gradient(135deg, var(--color-primary-dark), #3b475f);
+  color: var(--color-neutral-white);
   border-radius: 2rem;
-  box-shadow: 0 10px 30px rgba(201, 86, 86, 0.4);
+  box-shadow: 0 10px 30px rgba(42, 51, 66, 0.4);
 }
 
 .hero h1 {
@@ -31,13 +31,13 @@
 
 .hero p {
   font-size: 1.2rem;
-  opacity: 0.95;
+  opacity: 0.9;
   margin-bottom: 2rem;
 }
 
 .ctaButton {
-  background: white;
-  color: #c95656;
+  background: var(--color-primary-accent);
+  color: var(--color-neutral-white);
   font-weight: bold;
   padding: 1rem 2rem;
   border-radius: 999px;
@@ -45,19 +45,19 @@
   cursor: pointer;
   border: none;
   transition: 0.3s ease;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 196, 159, 0.4);
 }
 
 .ctaButton:hover {
   transform: scale(1.05);
-  background: #fdf2f2;
+  background: #00b28e;
 }
 
 .ctaInfo {
   display: block;
   font-size: 0.9rem;
   margin-top: 1rem;
-  opacity: 0.9;
+  opacity: 0.85;
 }
 
 /* ===== CARDS ===== */
@@ -68,7 +68,7 @@
 }
 
 .card {
-  background: #fff;
+  background: var(--color-neutral-light);
   padding: 2rem;
   border-radius: 1.5rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
@@ -84,6 +84,7 @@
 .icon {
   font-size: 2rem;
   margin-bottom: 1rem;
+  color: var(--color-primary-accent);
 }
 
 .cardTitle {
@@ -94,7 +95,7 @@
 
 .cardDescription {
   font-size: 1rem;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 /* ===== COMPARISON ===== */
@@ -110,7 +111,7 @@
 }
 
 .comparisonCard {
-  background: #fafafa;
+  background: var(--color-neutral-light);
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -122,20 +123,20 @@
   margin-bottom: 1rem;
 }
 
-.comparisonCard ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
 .comparisonCard li {
   margin: 0.5rem 0;
   font-size: 0.95rem;
 }
 
-.comparisonCard li::before {
-  content: "• ";
-  color: #c95656;
+.comparisonCard:first-child li::before {
+  content: "✖ ";
+  color: var(--color-secondary-coral);
+  font-weight: bold;
+}
+
+.comparisonCard:last-child li::before {
+  content: "✔ ";
+  color: var(--color-primary-accent);
   font-weight: bold;
 }
 
@@ -148,7 +149,7 @@
 }
 
 .stepCard {
-  background: white;
+  background: var(--color-neutral-white);
   padding: 2rem;
   border-radius: 1.5rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
@@ -161,8 +162,8 @@
 }
 
 .stepNumber {
-  background: #c95656;
-  color: white;
+  background: var(--color-primary-accent);
+  color: var(--color-neutral-white);
   font-weight: bold;
   font-size: 1.5rem;
   width: 50px;
@@ -187,7 +188,7 @@
 }
 
 .planCard {
-  background: #fff;
+  background: var(--color-neutral-white);
   border-radius: 1.5rem;
   padding: 2rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
@@ -201,28 +202,29 @@
 }
 
 .popular {
-  border: 2px solid #c95656;
+  border: 2px solid var(--color-primary-gold);
 }
 
 .popularBadge {
-  background: #c95656;
-  color: white;
+  background: var(--color-primary-gold);
+  color: var(--color-primary-dark);
   padding: 0.2rem 0.8rem;
   border-radius: 999px;
   font-size: 0.8rem;
   display: inline-block;
   margin-bottom: 0.8rem;
+  font-weight: 600;
 }
 
 .planPrice {
   font-size: 1.6rem;
   font-weight: bold;
-  color: #c95656;
+  color: var(--color-primary-accent);
   margin: 0.5rem 0 1rem;
 }
 
 .planButton {
-  background: #c95656;
+  background: var(--color-primary-accent);
   color: white;
   padding: 0.8rem 1.5rem;
   border-radius: 999px;
@@ -233,7 +235,7 @@
 }
 
 .planButton:hover {
-  background: #aa3f3f;
+  background: #00b28e;
 }
 
 /* ===== TESTIMONIALS ===== */
@@ -245,7 +247,7 @@
 }
 
 .testimonialCard {
-  background: #fff;
+  background: var(--color-neutral-light);
   padding: 2rem;
   border-radius: 1.5rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
@@ -255,7 +257,7 @@
 }
 
 .rating {
-  color: #f5a623;
+  color: var(--color-primary-gold);
   font-size: 1.2rem;
 }
 
@@ -266,8 +268,8 @@
 }
 
 .avatar {
-  background: #c95656;
-  color: white;
+  background: var(--color-primary-accent);
+  color: var(--color-neutral-white);
   border-radius: 50%;
   width: 40px;
   height: 40px;
@@ -286,7 +288,7 @@
 }
 
 .faqItem {
-  background: #fafafa;
+  background: var(--color-neutral-light);
   padding: 1.5rem;
   border-radius: 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
@@ -306,13 +308,14 @@
 .finalCta {
   text-align: center;
   padding: 3rem 1rem;
-  background: linear-gradient(135deg, #fdf2f2, #ffe8e8);
+  background: var(--color-secondary-blue);
   border-radius: 1.5rem;
+  color: var(--color-neutral-white);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 .ultimaButton {
-  background: #c95656;
+  background: var(--color-primary-accent);
   color: white;
   padding: 1rem 2rem;
   border-radius: 999px;
@@ -323,17 +326,17 @@
 }
 
 .ultimaButton:hover {
-  background: #aa3f3f;
+  background: #00b28e;
 }
 
 .ultimaInfo {
   display: block;
   margin-top: 0.5rem;
   font-size: 0.9rem;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
-/* ===== RESPONSIVIDADE ===== */
+/* ===== RESPONSIVO ===== */
 @media (max-width: 768px) {
   .hero h1 {
     font-size: 2rem;

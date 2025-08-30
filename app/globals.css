@@ -8,3 +8,14 @@ As regras definidas aqui são úteis para garantir uma aparência consistente e 
   padding: 0; /* Remove o preenchimento padrão de todos os elementos, evitando espaçamentos extras */
   box-sizing: border-box; /* Define o modelo de caixa para incluir bordas e preenchimentos nas dimensões totais do elemento */
 }
+
+:root {
+  --color-primary-dark: #2A3342;
+  --color-primary-accent: #00C49F;
+  --color-primary-gold: #FFB900;
+  --color-secondary-coral: #FF7A5A;
+  --color-secondary-blue: #4FC3F7;
+  --color-neutral-white: #FFFFFF;
+  --color-neutral-light: #F5F7FA;
+  --color-text: #2A3342;
+}
