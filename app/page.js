@@ -4,114 +4,110 @@ import styles from "./page.module.css";
 export default function Home() {
   const cards = [
     {
-      icon: "🎯",
-      title: "Agenda Sempre Cheia",
-      description: "Identifique clientes prontos para agendar e nunca mais perca uma venda por esquecimento.",
+      icon: "🤖",
+      title: "IA que Trabalha por Você",
+      description:
+        "Agendamento automático via WhatsApp, lembretes e reativações sem que você precise mover um dedo.",
     },
     {
-      icon: "💜",
-      title: "Clientes Mais Fiéis",
-      description: "Entenda o que faz suas clientes voltarem e replique o sucesso com todas.",
+      icon: "📈",
+      title: "Mais Faturamento, Menos Stress",
+      description:
+        "Preencha horários ociosos com precificação dinâmica e insights preditivos para evitar cancelamentos.",
     },
     {
-      icon: "📊",
-      title: "Insights Instantâneos",
-      description: "Veja em tempo real quem está satisfeito, quem vai cancelar e quem pode gastar mais.",
+      icon: "💎",
+      title: "Clientes VIP de Verdade",
+      description:
+        "Identifique seus melhores clientes, crie campanhas automáticas e aumente a fidelidade com gamificação.",
     },
     {
-      icon: "⚡",
-      title: "CRM no Automático",
-      description: "Enquanto você foca na beleza, organizamos tudo: histórico, preferências e próximos passos.",
+      icon: "🛡️",
+      title: "Privacidade & Segurança",
+      description:
+        "LGPD pronta e criptografia nível bancário. Seus dados e os de suas clientes estão sempre protegidos.",
     },
   ];
 
   const antes = [
-    "Perdendo clientes por esquecimento",
-    "Sem saber por que clientes cancelam",
-    "Agenda desorganizada",
-    "Retrabalho anotando tudo à mão",
-    "Perdendo oportunidades de venda",
+    "Horários vagos e dinheiro perdido",
+    "Cancelamentos e no-shows de última hora",
+    "Clientes que somem sem você perceber",
+    "Planilhas e papelada consumindo seu tempo",
+    "Dificuldade para entender seu próprio negócio",
   ];
 
   const depois = [
-    "Lembretes automáticos de retorno",
-    "Insights sobre satisfação em tempo real",
-    "Agenda otimizada e cheia",
-    "CRM preenchido automaticamente",
-    "Vendas baseadas em dados reais",
+    "Agenda cheia com lembretes automáticos",
+    "IA prevendo cancelamentos antes que aconteçam",
+    "Campanhas que trazem clientes de volta",
+    "Tudo organizado em um só lugar, sem retrabalho",
+    "Dashboards claros para decisões rápidas e lucrativas",
   ];
 
   const passos = [
     {
       number: "1",
-      title: "Conecte",
-      description: "Cole o link do seu WhatsApp Business e Instagram. 30 segundos e está pronto.",
+      title: "Conecte-se",
+      description:
+        "Integre seu WhatsApp e Instagram em segundos. Nada de instalação complicada.",
     },
     {
       number: "2",
-      title: "Relaxe",
-      description: "Nossa IA lê cada mensagem, identifica intenções e organiza tudo automaticamente.",
+      title: "Automatize",
+      description:
+        "IA cuida do agendamento, manda lembretes, reativa clientes inativos e organiza sua agenda.",
     },
     {
       number: "3",
-      title: "Venda Mais",
-      description: "Receba insights diários sobre seus clientes e saiba exatamente como aumentar sua receita.",
+      title: "Cresça",
+      description:
+        "Receba insights diários para faturar mais e fidelizar clientes sem esforço.",
     },
   ];
 
   const faqs = [
     {
-      question: "Preciso saber de tecnologia para usar?",
+      question: "Funciona mesmo para salão pequeno?",
       answer:
-        "Não! O OiAgendaPro foi criado para ser extremamente simples. Você conecta seu WhatsApp e Instagram em 30 segundos e tudo funciona automaticamente.",
+        "Sim! Foi feito para quem trabalha sozinho ou com equipes pequenas. É simples e poderoso.",
     },
     {
-      question: "Posso cancelar quando quiser?",
+      question: "E se eu não gostar?",
       answer:
-        "Sim! Não temos fidelidade. Você pode cancelar a qualquer momento e continuar usando até o final do período pago.",
-    },
-    {
-      question: "Funciona para salão pequeno?",
-      answer:
-        "Perfeitamente! Nosso plano Starter foi criado especialmente para profissionais autônomos e salões pequenos. Funciona até para quem trabalha sozinho.",
+        "Você pode cancelar a qualquer momento. Sem multas, sem dor de cabeça.",
     },
     {
       question: "Como funciona o teste grátis?",
       answer:
-        "São 14 dias completamente grátis, sem precisar de cartão de crédito. Você testa todas as funcionalidades e só paga se gostar.",
+        "14 dias gratuitos, sem cartão de crédito. Você testa tudo e só paga se amar.",
     },
     {
-      question: "Meus dados ficam seguros?",
+      question: "E meus dados?",
       answer:
-        "Absolutamente! Usamos criptografia de nível bancário e nunca compartilhamos seus dados. Sua privacidade e a de seus clientes é nossa prioridade.",
+        "Protegidos! Seguimos a LGPD e usamos criptografia de nível bancário para garantir sua segurança.",
     },
   ];
 
   const plans = [
     {
       name: "Starter",
-      price: "R$ 29.99/mês",
-      description: "Ideal para profissionais autônomos",
-      features: [
-        "Até 2 usuários por estabelecimento",
-      ],
+      price: "R$ 29,99/mês",
+      description: "Perfeito para quem trabalha sozinho",
+      features: ["Até 2 usuários", "Agendamento via WhatsApp", "Lembretes automáticos"],
     },
     {
       name: "Profissional",
       price: "R$ 54/mês",
-      description: "Perfeito para salões pequenos e médios",
-      features: [
-        "Até 5 usuários por estabelecimento",
-      ],
+      description: "Para salões que querem crescer",
+      features: ["Até 5 usuários", "Insights preditivos", "Campanhas automáticas"],
       popular: true,
     },
     {
       name: "Premium",
       price: "R$ 83/mês",
-      description: "Para salões que querem dominar o mercado",
-      features: [
-        "Multi-usuários (até 10)",
-      ],
+      description: "Para quem quer dominar o mercado",
+      features: ["Até 10 usuários", "Gestão financeira integrada", "Precificação dinâmica"],
     },
   ];
 
@@ -120,7 +116,7 @@ export default function Home() {
       name: "Ana Silva",
       business: "Studio Ana Beauty",
       feedback:
-        "Minha agenda nunca ficou tão organizada. Agora entendo porque minhas clientes voltam!",
+        "Minha agenda nunca ficou tão cheia. E o melhor: sem eu precisar ligar para ninguém!",
       rating: 5,
       avatar: "A",
     },
@@ -128,7 +124,7 @@ export default function Home() {
       name: "Carla Ferreira",
       business: "Salon Premium",
       feedback:
-        "Aumentei 40% o retorno dos clientes só seguindo os insights do OiAgendaPro",
+        "A IA do OiAgendaPro me avisa antes de perder clientes. Já aumentei meu faturamento em 40%!",
       rating: 5,
       avatar: "C",
     },
@@ -136,7 +132,7 @@ export default function Home() {
       name: "Marina Costa",
       business: "Espaço Beleza Marina",
       feedback:
-        "Finalmente um CRM que não precisa de técnico para usar!",
+        "Tudo ficou mais simples. Minha equipe está mais feliz e meus clientes também.",
       rating: 5,
       avatar: "M",
     },
@@ -144,7 +140,18 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      <h1>Bem-vindo ao AgendaPro</h1>
+      <header className={styles.hero}>
+        <h1>Transforme sua Agenda em uma Máquina de Lucro 💰</h1>
+        <p>
+          OiAgendaPro é o copiloto inteligente que preenche sua agenda,
+          fideliza seus clientes e aumenta seu faturamento — tudo no automático.
+        </p>
+        <button className={styles.ctaButton}>Começar Teste Grátis</button>
+        <span className={styles.ctaInfo}>
+          14 dias grátis • Sem cartão • Cancele quando quiser
+        </span>
+      </header>
+
       <div className={styles.cards}>
         {cards.map((card, index) => (
           <div key={index} className={styles.card}>
@@ -157,41 +164,24 @@ export default function Home() {
 
       <section className={styles.comparison}>
         <h2>Antes vs Depois</h2>
-        <p>Veja a transformação que o OiAgendaPro traz para seu salão</p>
+        <p>Veja o que muda quando você tem tecnologia de ponta cuidando do seu salão</p>
         <div className={styles.comparisonGrid}>
           <div className={styles.comparisonCard}>
-            <h3 className={styles.comparisonTitle}>
-              <span className={styles.badIcon}>✖</span> ANTES (Sem OiAgendaPro)
-            </h3>
-            <ul>
-              {antes.map((item, index) => (
-                <li key={index} className={styles.badItem}>
-                  ✖ {item}
-                </li>
-              ))}
-            </ul>
+            <h3 className={styles.comparisonTitle}>🚫 Antes</h3>
+            <ul>{antes.map((item, i) => <li key={i}>✖ {item}</li>)}</ul>
           </div>
           <div className={styles.comparisonCard}>
-            <h3 className={styles.comparisonTitle}>
-              <span className={styles.goodIcon}>✔</span> DEPOIS (Com OiAgendaPro)
-            </h3>
-            <ul>
-              {depois.map((item, index) => (
-                <li key={index} className={styles.goodItem}>
-                  ✔ {item}
-                </li>
-              ))}
-            </ul>
+            <h3 className={styles.comparisonTitle}>✅ Depois</h3>
+            <ul>{depois.map((item, i) => <li key={i}>✔ {item}</li>)}</ul>
           </div>
         </div>
       </section>
 
       <section className={styles.steps}>
         <h2>Como Funciona</h2>
-        <p>Três passos simples para revolucionar seu salão</p>
         <div className={styles.stepsGrid}>
-          {passos.map((passo, index) => (
-            <div key={index} className={styles.stepCard}>
+          {passos.map((passo, i) => (
+            <div key={i} className={styles.stepCard}>
               <div className={styles.stepNumber}>{passo.number}</div>
               <h3>{passo.title}</h3>
               <p>{passo.description}</p>
@@ -200,75 +190,58 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Planos e Preços */}
       <section className={styles.plans}>
-        <h2>Planos e Preços</h2>
-        <p>Escolha o plano ideal para seu negócio</p>
+        <h2>Escolha seu Plano</h2>
         <div className={styles.planCards}>
-          {plans.map((plan, index) => (
-            <div
-              key={index}
-              className={`${styles.planCard} ${
-                plan.popular ? styles.popular : ""
-              }`}
-            >
-              {plan.popular && <span className={styles.popularBadge}>MAIS POPULAR</span>}
+          {plans.map((plan, i) => (
+            <div key={i} className={`${styles.planCard} ${plan.popular ? styles.popular : ""}`}>
+              {plan.popular && <span className={styles.popularBadge}>🔥 Mais Popular</span>}
               <h3>{plan.name}</h3>
               <p className={styles.planPrice}>{plan.price}</p>
               <p>{plan.description}</p>
-              <ul>
-                {plan.features.map((feature, i) => (
-                  <li key={i}>✔ {feature}</li>
-                ))}
-              </ul>
+              <ul>{plan.features.map((f, idx) => <li key={idx}>✔ {f}</li>)}</ul>
               <button className={styles.planButton}>Começar Agora</button>
             </div>
           ))}
         </div>
       </section>
 
-      {/* O que nossos clientes dizem */}
       <section className={styles.testimonials}>
-        <h2>O que nossos clientes dizem</h2>
-        <p>Histórias reais de transformação</p>
+        <h2>Histórias de Sucesso</h2>
         <div className={styles.testimonialCards}>
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className={styles.testimonialCard}>
-              <div className={styles.rating}>
-                {"★".repeat(testimonial.rating)}
-              </div>
-              <p className={styles.feedback}>{testimonial.feedback}</p>
+          {testimonials.map((t, i) => (
+            <div key={i} className={styles.testimonialCard}>
+              <div className={styles.rating}>{"★".repeat(t.rating)}</div>
+              <p>{t.feedback}</p>
               <div className={styles.clientInfo}>
-                <span className={styles.avatar}>{testimonial.avatar}</span>
+                <span className={styles.avatar}>{t.avatar}</span>
                 <div>
-                  <h3>{testimonial.name}</h3>
-                  <p>{testimonial.business}</p>
+                  <h3>{t.name}</h3>
+                  <p>{t.business}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </section>
-      
-      {/* Perguntas Frequentes */}
+
       <section className={styles.faq}>
         <h2>Perguntas Frequentes</h2>
-        <p>Tire suas dúvidas sobre o OiAgendaPro</p>
         <div className={styles.faqList}>
-          {faqs.map((faq, index) => (
-            <div key={index} className={styles.faqItem}>
-              <h3>{faq.question}</h3>
-              <p>{faq.answer}</p>
+          {faqs.map((f, i) => (
+            <div key={i} className={styles.faqItem}>
+              <h3>{f.question}</h3>
+              <p>{f.answer}</p>
             </div>
           ))}
         </div>
       </section>
-      <section className={styles.ultima}>
+
+      <footer className={styles.finalCta}>
         <h2>Chegou a hora de lotar sua agenda com inteligência</h2>
-        <p>Não perca a oportunidade de transformar seu salão!</p>
         <button className={styles.ultimaButton}>Teste grátis agora</button>
         <span className={styles.ultimaInfo}>14 dias grátis • Sem cartão • Cancele quando quiser</span>
-      </section>
+      </footer>
     </div>
   );
 }
