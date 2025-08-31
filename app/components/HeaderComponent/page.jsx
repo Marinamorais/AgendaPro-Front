@@ -134,13 +134,13 @@ const HeaderComponent = () => {
         <div className={styles.brand}>
           {/* Dica: certifique-se que este caminho da logo existe. */}
           <Image
-  src="https://i.imgur.com/SbGOZjM.png"
+  src="https://i.imgur.com/0SkCPnh.png"
   alt="Logo"
   width={48}
   height={48}
   priority
 />
-          <span className={styles.brandText}>SupremoApp</span>
+          <span className={styles.brandText}>OiAgendaPro</span>
         </div>
         <nav className={styles.nav} aria-label="Ações de sessão">
           <button className={`${styles.btn} ${styles.ghost}`} onClick={openLogin} aria-haspopup="dialog" aria-controls="auth-modal">Login</button>
