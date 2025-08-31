@@ -1,0 +1,80 @@
+.footer {
+  width: 100%;
+  background: rgba(20, 24, 32, 0.75);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 24px 20px 12px;
+  color: #e6e9ef;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: sans-serif;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.brandText {
+  font-size: 20px;
+  font-weight: 700;
+  color: #00C49F;
+}
+
+.nav {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.link {
+  color: #a6adbb;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #00C49F;
+}
+
+.social {
+  display: flex;
+  gap: 12px;
+}
+
+.socialLink {
+  font-size: 20px;
+  color: #a6adbb;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.socialLink:hover {
+  color: #00C49F;
+  transform: translateY(-2px);
+}
+
+.copy {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #7a7f8c;
+  text-align: center;
+}
+
+/* Responsivo */
+@media (max-width: 600px) {
+  .container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .nav {
+    justify-content: center;
+  }
+}

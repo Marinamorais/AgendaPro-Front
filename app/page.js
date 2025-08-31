@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./page.module.css";
 import HeaderComponent from "./components/HeaderComponent/page";
+import FooterComponent from "./components/FooterComponent/page";
 
 export default function Home() {
   // ------------------------
@@ -185,6 +186,7 @@ export default function Home() {
         </div>
       </section>
     </div>
+    <FooterComponent/>
     </main>
   );
 }
