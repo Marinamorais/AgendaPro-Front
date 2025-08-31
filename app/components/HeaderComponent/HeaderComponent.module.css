@@ -1,0 +1,33 @@
+.header { position: relative; z-index: 1; background: linear-gradient(180deg, rgba(11,14,20,0.85), rgba(11,14,20,0.65)); border-bottom: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(6px); }
+.container { max-width: 1200px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+.brand { display: flex; align-items: center; gap: 10px; color: #e6e9ef; font-weight: 700; letter-spacing: 0.2px; }
+.brandText { font-size: 18px; }
+
+.nav { display: flex; gap: 10px; }
+.btn { appearance: none; border: 1px solid rgba(255,255,255,0.08); padding: 10px 14px; border-radius: 14px; cursor: pointer; font-weight: 600; color: #e6e9ef; background: rgba(255,255,255,0.02); transition: transform .08s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease; outline: none; }
+.btn\:hover { transform: translateY(-1px); border-color: rgba(255,255,255,0.2); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.btn\:active { transform: translateY(0); }
+.btn.primary { background: linear-gradient(180deg, #00C49F, #00a883); color: #051b15; border-color: transparent; box-shadow: 0 8px 24px rgba(0, 196, 159, .35); }
+.btn.ghost { background: rgba(255,255,255,0.03); }
+
+.overlay { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; backdrop-filter: blur(12px) saturate(1.2); background: radial-gradient(1200px 800px at 10% -10%, rgba(0,196,159,.08), transparent 60%), radial-gradient(900px 600px at 100% 0%, rgba(0,196,159,.06), transparent 50%), rgba(5,8,13, .55); z-index: 999; }
+.glow, .glow2 { position: absolute; border-radius: 999px; filter: blur(60px); opacity: .65; pointer-events: none; }
+.glow { width: 520px; height: 520px; background: radial-gradient(closest-side, rgba(0,196,159,0.35), transparent 70%); left: -120px; top: -120px; }
+.glow2 { width: 460px; height: 460px; background: radial-gradient(closest-side, rgba(0,196,159,.18), transparent 70%); right: -80px; bottom: -120px; }
+
+.panel { width: min(680px, 96vw); max-height: 86vh; overflow: auto; border-radius: 20px; background: rgba(20, 24, 32, 0.65); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 30px 100px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.02) inset; backdrop-filter: blur(16px); outline: none; position: relative; }
+.panel::before { content: ""; position: absolute; inset: -2px; border-radius: 22px; padding: 2px; background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(0,196,159,.25)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.panelHeader { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,.06); background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)); position: sticky; top: 0; backdrop-filter: blur(10px); z-index: 1; }
+.panelTitle { margin: 0; color: #e6e9ef; font-size: 20px; letter-spacing: 0.2px; }
+.panelBody { padding: 18px; color: #e6e9ef; }
+.panelFooter { padding: 14px 18px 18px; display: flex; justify-content: center; border-top: 1px solid rgba(255,255,255,.06); background: linear-gradient(180deg, rgba(255,255,255,.01), rgba(255,255,255,.02)); }
+.linkBtn { background: none; border: none; color: #a6adbb; font-weight: 600; cursor: pointer; }
+.linkBtn span { color: #00C49F; text-decoration: underline; text-underline-offset: 3px; }
+
+.closeBtn { appearance: none; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); color: #e6e9ef; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; cursor: pointer; }
+.closeBtn\:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.2); }
+
+@media (max-width: 520px) {
+.brandText { display: none; }
+.panel { width: 96vw; }
+}

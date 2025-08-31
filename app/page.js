@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import styles from "./page.module.css";
-import LoginComponent from "./components/LoginComponent/page.jsx";
+import HeaderComponent from "./components/HeaderComponent/page";
 
 export default function Home() {
   // ------------------------
@@ -83,7 +83,9 @@ export default function Home() {
   ];
 
   return (
-    <div className={`${styles.container}`}>
+    <main>
+      <HeaderComponent />
+      <div className={`${styles.container}`}>
 
       {/* Toast */}
       {toast && <div className={styles.toast}>{toast}</div>}
@@ -183,5 +185,6 @@ export default function Home() {
         </div>
       </section>
     </div>
+    </main>
   );
 }
