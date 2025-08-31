@@ -1,27 +1,53 @@
+// LoginComponent.js
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import styles from "./LoginComponent.module.css";
 
+// 1. Acesse a variável de ambiente corretamente
+const apiUrl = "https://agenda-pro-back.vercel.app/api";
+
 const LoginComponent = ({ onLogin }) => {
-  const [username, setUsername] = useState("");
+  // 2. Mude 'username' para 'email' para corresponder à API
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  // 3. Transforme a função em async para usar await
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    setTimeout(() => {
-      if (username === "admin" && password === "123456") {
-        onLogin();
-      } else {
-        setError("Usuário ou senha incorretos");
+    try {
+      // 4. Faça a requisição POST para a API de login
+      const response = await fetch(`${apiUrl}/establishments/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Se a resposta não for 2xx, lança um erro com a mensagem da API
+        throw new Error(data.message || 'Erro ao tentar fazer login.');
       }
+
+      // 5. Se o login for bem-sucedido, salve o token e chame onLogin
+      localStorage.setItem('authToken', data.token); // Salva o token no navegador
+      onLogin(); // Avisa o componente pai que o login foi feito
+
+    } catch (err) {
+      // 6. Mostra o erro da API para o usuário
+      setError(err.message);
+    } finally {
+      // 7. Garante que o loading sempre termine
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -38,10 +64,11 @@ const LoginComponent = ({ onLogin }) => {
           <div className={styles.inputGroup}>
             <span className={styles.icon}>👤</span>
             <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              // 8. Atualize os campos para 'email'
+              type="email"
+              placeholder="E-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               className={styles.input}
             />
@@ -50,7 +77,7 @@ const LoginComponent = ({ onLogin }) => {
             <span className={styles.icon}>🔒</span>
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -64,7 +91,7 @@ const LoginComponent = ({ onLogin }) => {
             whileTap={{ scale: 0.95 }}
             disabled={loading}
           >
-            {loading ? "Loading..." : "Login"}
+            {loading ? "Entrando..." : "Login"}
           </motion.button>
         </form>
       </motion.div>
