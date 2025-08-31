@@ -1,33 +1,78 @@
-"use client";
-import axios from "axios";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// 1. Pega a URL da API do arquivo .env, garantindo que funcione em qualquer ambiente.
-//    Lembre-se que a variável no .env precisa do prefixo (ex: VITE_API_URL).
-const API_URL = import.meta.env.VITE_API_URL;
+// Função para obter os cabeçalhos de autenticação
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+};
 
-// 2. Cria a instância do Axios com a URL base correta.
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-// 3. (A MÁGICA) - Cria um "interceptor" que adiciona o token de autenticação
-//    em TODAS as requisições feitas com esta instância.
-api.interceptors.request.use(
-  (config) => {
-    // Pega o token que foi salvo no localStorage durante o login
-    const token = localStorage.getItem('authToken');
-
-    // Se o token existir, adiciona-o ao cabeçalho de autorização
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    
-    return config; // Retorna a configuração da requisição (com o token, se houver)
-  },
-  (error) => {
-    // Faz algo com o erro da requisição
-    return Promise.reject(error);
+// Função genérica para buscar dados (ex: profissionais, clientes, etc.)
+export const fetchData = async (endpoint, establishmentId) => {
+  if (!establishmentId) return [];
+  try {
+    const response = await fetch(`${API_URL}/${endpoint}?establishment_id=${establishmentId}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) throw new Error(`Falha ao buscar ${endpoint}.`);
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    alert(error.message); // Idealmente, use um sistema de notificações (toast)
+    return [];
   }
-);
+};
 
-export default api;
+// Função genérica para criar novos dados
+export const createData = async (endpoint, data) => {
+  try {
+    const response = await fetch(`${API_URL}/${endpoint}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    const responseData = await response.json();
+    if (!response.ok) throw new Error(responseData.message || `Erro ao criar ${endpoint}.`);
+    return responseData;
+  } catch (error) {
+    console.error(error);
+    throw error; // Lança o erro para ser tratado no componente
+  }
+};
+
+// --- NOVO: Função para Atualizar (UPDATE) ---
+export const updateData = async (endpoint, id, data) => {
+  try {
+    const response = await fetch(`${API_URL}/${endpoint}/${id}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    const responseData = await response.json();
+    if (!response.ok) throw new Error(responseData.message || `Error updating ${endpoint}.`);
+    return responseData;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+// --- NOVO: Função para Deletar (DELETE) ---
+export const deleteData = async (endpoint, id) => {
+  try {
+    const response = await fetch(`${API_URL}/${endpoint}/${id}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok && response.status !== 204) {
+      const responseData = await response.json();
+      throw new Error(responseData.message || `Error deleting ${endpoint}.`);
+    }
+    // DELETE bem-sucedido não retorna conteúdo
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

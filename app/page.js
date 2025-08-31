@@ -1,34 +1,20 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./page.module.css";
 import HeaderComponent from "./components/HeaderComponent/page";
 import FooterComponent from "./components/FooterComponent/page";
+import { AnimatePresence, motion } from "framer-motion";
+import AuthModal from "./components/AuthModal/page"; // Importa o novo modal
 
 export default function Home() {
-  // ------------------------
-  // ESTADOS E HOOKS
-  // ------------------------
-  const [darkMode, setDarkMode] = useState(false);
+  // Estado para controlar qual modal está aberto: 'login', 'register' ou null
+  const [authMode, setAuthMode] = useState(null);
   const [toast, setToast] = useState(null);
   const [faqOpen, setFaqOpen] = useState(null);
 
-  const konami = useRef([]);
-  useEffect(() => {
-    const handler = (e) => {
-      konami.current.push(e.key);
-      if (
-        konami.current.join(" ").includes(
-          "ArrowUp ArrowUp ArrowDown ArrowDown ArrowLeft ArrowRight ArrowLeft ArrowRight b a"
-        )
-      ) {
-        triggerConfetti();
-        konami.current = [];
-      }
-      if (konami.current.length > 10) konami.current.shift();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
+  // Funções para abrir e fechar o modal de autenticação
+  const openAuthModal = (mode) => setAuthMode(mode);
+  const closeAuthModal = () => setAuthMode(null);
 
   useEffect(() => {
     if (toast) {
@@ -37,16 +23,11 @@ export default function Home() {
     }
   }, [toast]);
 
-  const triggerConfetti = () => {
-    setToast("🎉 Surpresa! Você desbloqueou o modo secreto!");
-    // Se quiser confetti real, pode integrar a biblioteca 'canvas-confetti'
-  };
-
   const showToast = (msg) => setToast(msg);
   const toggleFaq = (i) => setFaqOpen(faqOpen === i ? null : i);
 
   // ------------------------
-  // DADOS
+  // DADOS DA LANDING PAGE
   // ------------------------
   const cards = [
     { icon: "🤖", title: "IA que Trabalha por Você", description: "Agendamento automático via WhatsApp, lembretes e reativações sem que você precise mover um dedo." },
@@ -85,108 +66,121 @@ export default function Home() {
 
   return (
     <main>
-      <HeaderComponent />
+      {/* O Modal de Autenticação, renderizado condicionalmente */}
+      <AnimatePresence>
+        {authMode && (
+          <AuthModal 
+            mode={authMode} 
+            setMode={setAuthMode} 
+            closeModal={closeAuthModal} 
+          />
+        )}
+      </AnimatePresence>
+
+      <HeaderComponent openAuthModal={openAuthModal} />
       <div className={`${styles.container}`}>
 
-      {/* Toast */}
-      {toast && <div className={styles.toast}>{toast}</div>}
+        {/* Toast */}
+        {toast && <div className={styles.toast}>{toast}</div>}
 
-      {/* Hero */}
-      <header className={styles.hero}>
-        <h1>Transforme sua Agenda em uma Máquina de Lucro 💰</h1>
-        <p>OiAgendaPro é o copiloto inteligente que preenche sua agenda, fideliza seus clientes e aumenta seu faturamento — tudo no automático.</p>
-        <button className={styles.ctaButton}>Comece seu teste grátis</button>
-        <span className={styles.ctaInfo}>14 dias grátis • Sem cartão • Cancele quando quiser</span>
-      </header>
+        {/* Hero */}
+        <header className={styles.hero}>
+          <h1>Transforme sua Agenda em uma Máquina de Lucro 💰</h1>
+          <p>OiAgendaPro é o copiloto inteligente que preenche sua agenda, fideliza seus clientes e aumenta seu faturamento — tudo no automático.</p>
+          <button className={styles.ctaButton} onClick={() => openAuthModal('register')}>
+            Comece seu teste grátis
+          </button>
+          <span className={styles.ctaInfo}>14 dias grátis • Sem cartão • Cancele quando quiser</span>
+        </header>
 
-      {/* Cards */}
-      <div className={styles.cards}>
-        {cards.map((c, i) => (
-          <div key={i} className={styles.card} onClick={() => showToast(`Você clicou em "${c.title}"`)}>
-            <span className={styles.icon}>{c.icon}</span>
-            <h2 className={styles.cardTitle}>{c.title}</h2>
-            <h2 className={styles.cardDescription}>{c.description}</h2>
-          </div>
-        ))}
-      </div>
-
-      {/* Comparison */}
-      <section className={styles.comparison}>
-        <h2>Antes vs Depois</h2>
-        <div className={styles.comparisonGrid}>
-          <div className={styles.comparisonCard}>
-            <h3>🚫 Antes</h3>
-            <ul>{antes.map((a, i) => <li key={i}>{a}</li>)}</ul>
-          </div>
-          <div className={styles.comparisonCard}>
-            <h3>✅ Depois</h3>
-            <ul>{depois.map((d, i) => <li key={i}>{d}</li>)}</ul>
-          </div>
-        </div>
-      </section>
-
-      {/* Steps */}
-      <section className={styles.steps}>
-        <h2>Como Funciona</h2>
-        <div className={styles.stepsGrid}>
-          {passos.map((p, i) => (
-            <div key={i} className={styles.stepCard}>
-              <div className={styles.stepNumber}>{p.number}</div>
-              <h3>{p.title}</h3>
-              <p>{p.description}</p>
+        {/* Cards */}
+        <div className={styles.cards}>
+          {cards.map((c, i) => (
+            <div key={i} className={styles.card} onClick={() => showToast(`Você clicou em "${c.title}"`)}>
+              <span className={styles.icon}>{c.icon}</span>
+              <h2 className={styles.cardTitle}>{c.title}</h2>
+              <h2 className={styles.cardDescription}>{c.description}</h2>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* Plans */}
-      <section className={styles.plans}>
-        <h2>Escolha seu Plano</h2>
-        <div className={styles.planCards}>
-          {plans.map((plan, i) => (
-            <div key={i} className={`${styles.planCard} ${plan.popular ? styles.popular : ""}`}>
-              {plan.popular && <span className={styles.popularBadge}>🔥 Mais Popular</span>}
-              <h3>{plan.name}</h3>
-              <p className={styles.planPrice}>{plan.price}</p>
-              <p>{plan.description}</p>
-              <ul>{plan.features.map((f, idx) => <li key={idx}>{f}</li>)}</ul>
-              <button className={styles.planButton} onClick={() => showToast(`Você escolheu o plano ${plan.name}`)}>Começar Agora</button>
+        {/* Comparison */}
+        <section className={styles.comparison}>
+          <h2>Antes vs Depois</h2>
+          <div className={styles.comparisonGrid}>
+            <div className={styles.comparisonCard}>
+              <h3>🚫 Antes</h3>
+              <ul>{antes.map((a, i) => <li key={i}>{a}</li>)}</ul>
             </div>
-          ))}
-        </div>
-      </section>
+            <div className={styles.comparisonCard}>
+              <h3>✅ Depois</h3>
+              <ul>{depois.map((d, i) => <li key={i}>{d}</li>)}</ul>
+            </div>
+          </div>
+        </section>
 
-      {/* Testimonials */}
-      <section className={styles.testimonials}>
-        <h2>Histórias de Sucesso</h2>
-        <div className={styles.testimonialCards}>
-          {testimonials.map((t, i) => (
-            <div key={i} className={styles.testimonialCard}>
-              <div className={styles.rating}>{"★".repeat(t.rating)}</div>
-              <p>{t.feedback}</p>
-              <div className={styles.clientInfo}>
-                <span className={styles.avatar}>{t.avatar}</span>
-                <div><h3>{t.name}</h3><p>{t.business}</p></div>
+        {/* Steps */}
+        <section className={styles.steps}>
+          <h2>Como Funciona</h2>
+          <div className={styles.stepsGrid}>
+            {passos.map((p, i) => (
+              <div key={i} className={styles.stepCard}>
+                <div className={styles.stepNumber}>{p.number}</div>
+                <h3>{p.title}</h3>
+                <p>{p.description}</p>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
 
-      {/* FAQ */}
-      <section className={styles.faq}>
-        <h2>Perguntas Frequentes</h2>
-        <div className={styles.faqList}>
-          {faqs.map((f, i) => (
-            <div key={i} className={styles.faqItem} onClick={() => toggleFaq(i)}>
-              <h3>{f.question}</h3>
-              {faqOpen === i && <p>{f.answer}</p>}
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-    <FooterComponent/>
+        {/* Plans */}
+        <section className={styles.plans}>
+          <h2>Escolha seu Plano</h2>
+          <div className={styles.planCards}>
+            {plans.map((plan, i) => (
+              <div key={i} className={`${styles.planCard} ${plan.popular ? styles.popular : ""}`}>
+                {plan.popular && <span className={styles.popularBadge}>🔥 Mais Popular</span>}
+                <h3>{plan.name}</h3>
+                <p className={styles.planPrice}>{plan.price}</p>
+                <p>{plan.description}</p>
+                <ul>{plan.features.map((f, idx) => <li key={idx}>{f}</li>)}</ul>
+                <button className={styles.planButton} onClick={() => openAuthModal('register')}>Começar Agora</button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className={styles.testimonials}>
+          <h2>Histórias de Sucesso</h2>
+          <div className={styles.testimonialCards}>
+            {testimonials.map((t, i) => (
+              <div key={i} className={styles.testimonialCard}>
+                <div className={styles.rating}>{"★".repeat(t.rating)}</div>
+                <p>{t.feedback}</p>
+                <div className={styles.clientInfo}>
+                  <span className={styles.avatar}>{t.avatar}</span>
+                  <div><h3>{t.name}</h3><p>{t.business}</p></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className={styles.faq}>
+          <h2>Perguntas Frequentes</h2>
+          <div className={styles.faqList}>
+            {faqs.map((f, i) => (
+              <div key={i} className={styles.faqItem} onClick={() => toggleFaq(i)}>
+                <h3>{f.question}</h3>
+                {faqOpen === i && <p>{f.answer}</p>}
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+      <FooterComponent/>
     </main>
   );
 }
