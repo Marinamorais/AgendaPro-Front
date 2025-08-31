@@ -1,36 +1,83 @@
-"use client"
-import React, { useState } from "react"
-import { motion } from "framer-motion"
-import styles from "./RegisterComponent.module.css"
+"use client";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation"; // 1. Importa o useRouter para redirecionamento
+import styles from "./RegisterComponent.module.css";
+
+// Busca a URL da API do arquivo .env
+const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
 const RegisterComponent = () => {
+  const router = useRouter(); // Inicializa o roteador
+
+  // 2. Alinha o estado do formulário com os campos esperados pela API
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",          // 'name' em vez de 'username'
+    trade_name: "",    // Adiciona o nome fantasia
     email: "",
-    telephone: "",
+    phone: "",         // Renomeado de 'telephone' para 'phone'
+    plan: "premium",   // Define um plano padrão
     password: "",
     confirmPassword: "",
-  })
+  });
 
-  const [error, setError] = useState("")
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  // 3. Cria uma única função 'handleChange' para todos os inputs
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [id]: value,
+    }));
+  };
 
-    // Validação básica
-    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
-      setError("Preencha todos os campos!")
-      return
-    }
+  // 4. Implementa a lógica de submissão para a API
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
     if (formData.password !== formData.confirmPassword) {
-      setError("As senhas não coincidem!")
-      return
+      setError("As senhas não coincidem!");
+      setLoading(false);
+      return;
     }
 
-    setError("")
-    console.log("Registrado com sucesso:", formData)
-    // Aqui você pode enviar para sua API ou Firebase
-  }
+    try {
+      const response = await fetch(`${apiUrl}/establishments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Envia apenas os dados que a API espera, sem o 'confirmPassword'
+        body: JSON.stringify({
+          name: formData.name,
+          trade_name: formData.trade_name,
+          email: formData.email,
+          phone: formData.phone,
+          plan: formData.plan,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Falha ao registrar.");
+      }
+
+      // 5. Sucesso! Redireciona o usuário para a página de login.
+      alert("Registro realizado com sucesso! Você será redirecionado para o login.");
+      router.push('/'); // Assumindo que a rota '/' é a de login
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -39,39 +86,53 @@ const RegisterComponent = () => {
       transition={{ duration: 0.5 }}
       className={styles.container}
     >
-      <h2 className={styles.title}>Criar Conta</h2>
+      <h2 className={styles.title}>Criar Conta de Estabelecimento</h2>
 
       <form className={styles.form} onSubmit={handleSubmit}>
+        {/* Inputs atualizados para usar 'handleChange' e os novos 'id's */}
         <div className={styles.inputGroup}>
-          <label htmlFor="username">Nome de Usuário</label>
+          <label htmlFor="name">Nome do Estabelecimento</label>
           <input
             type="text"
-            id="username"
-            placeholder="Digite seu nome"
-            value={formData.username}
-            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            id="name"
+            placeholder="Ex: Estética Bella Pele"
+            value={formData.name}
+            onChange={handleChange}
+            required
           />
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="email">Email</label>
+          <label htmlFor="trade_name">Nome Fantasia (Opcional)</label>
+          <input
+            type="text"
+            id="trade_name"
+            placeholder="Ex: Bella Pele"
+            value={formData.trade_name}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label htmlFor="email">Email de Acesso</label>
           <input
             type="email"
             id="email"
             placeholder="seuemail@exemplo.com"
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={handleChange}
+            required
           />
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="telephone">Telefone</label>
+          <label htmlFor="phone">Telefone (Opcional)</label>
           <input
             type="tel"
-            id="telephone"
-            placeholder="(11) 99999-9999"
-            value={formData.telephone}
-            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+            id="phone"
+            placeholder="(55) 99999-9999"
+            value={formData.phone}
+            onChange={handleChange}
           />
         </div>
 
@@ -82,7 +143,8 @@ const RegisterComponent = () => {
             id="password"
             placeholder="Digite sua senha"
             value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            onChange={handleChange}
+            required
           />
         </div>
 
@@ -93,7 +155,8 @@ const RegisterComponent = () => {
             id="confirmPassword"
             placeholder="Confirme sua senha"
             value={formData.confirmPassword}
-            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            onChange={handleChange}
+            required
           />
         </div>
 
@@ -104,12 +167,13 @@ const RegisterComponent = () => {
           className={styles.submitButton}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          disabled={loading}
         >
-          Registrar
+          {loading ? "Registrando..." : "Criar Conta"}
         </motion.button>
       </form>
     </motion.div>
-  )
-}
+  );
+};
 
-export default RegisterComponent
+export default RegisterComponent;

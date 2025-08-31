@@ -1,13 +1,33 @@
-"use client"; // Indica que este componente deve ser renderizado no lado do cliente
-import axios from "axios"; // Importa a biblioteca Axios para fazer requisições HTTP
+"use client";
+import axios from "axios";
 
-// Define a URL base da API
-const API_URL = "https://agenda-pro-back.vercel.app/";
+// 1. Pega a URL da API do arquivo .env, garantindo que funcione em qualquer ambiente.
+//    Lembre-se que a variável no .env precisa do prefixo (ex: VITE_API_URL).
+const API_URL = import.meta.env.VITE_API_URL;
 
-// Cria uma instância do Axios com a URL base definida
+// 2. Cria a instância do Axios com a URL base correta.
 const api = axios.create({
   baseURL: API_URL,
-
 });
 
-export default api; // Exporta a instância do Axios para ser usada em outros arquivos
+// 3. (A MÁGICA) - Cria um "interceptor" que adiciona o token de autenticação
+//    em TODAS as requisições feitas com esta instância.
+api.interceptors.request.use(
+  (config) => {
+    // Pega o token que foi salvo no localStorage durante o login
+    const token = localStorage.getItem('authToken');
+
+    // Se o token existir, adiciona-o ao cabeçalho de autorização
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return config; // Retorna a configuração da requisição (com o token, se houver)
+  },
+  (error) => {
+    // Faz algo com o erro da requisição
+    return Promise.reject(error);
+  }
+);
+
+export default api;
