@@ -1,127 +1,115 @@
-"use client";
-import { useState, useEffect } from "react";
-import { createCliente, createProfissional } from "../../../service/api";
-import api from "../../../service/api";
+"use client"
+import React, { useState } from "react"
+import { motion } from "framer-motion"
+import styles from "./RegisterComponent.module.css"
 
-export default function RegisterComponent() {
-  const [tipo, setTipo] = useState("cliente");
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [valorGasto, setValorGasto] = useState(0);
-  const [frequencia, setFrequencia] = useState(0);
-  const [valorPerdido, setValorPerdido] = useState(0);
-  const [valorRecebido, setValorRecebido] = useState(0);
-  const [estabelecimentos, setEstabelecimentos] = useState([]);
-  const [estabelecimentoId, setEstabelecimentoId] = useState("");
-  const [mensagem, setMensagem] = useState("");
-  const [erro, setErro] = useState(false);
+const RegisterComponent = () => {
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    telephone: "",
+    password: "",
+    confirmPassword: "",
+  })
 
-  // Busca estabelecimentos da API
-  useEffect(() => {
-    async function fetchEstabelecimentos() {
-      try {
-        const res = await api.get("/estabelecimentos");
-        setEstabelecimentos(res.data);
-      } catch (error) {
-        console.error("Erro ao carregar estabelecimentos:", error);
-      }
+  const [error, setError] = useState("")
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+
+    // Validação básica
+    if (!formData.username || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError("Preencha todos os campos!")
+      return
     }
-    fetchEstabelecimentos();
-  }, []);
-
-  const validarEmail = (email) => /\S+@\S+\.\S+/.test(email);
-  const validarTelefone = (tel) => /^\(?\d{2}\)?\s?\d{4,5}-?\d{4}$/.test(tel);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMensagem("");
-    setErro(false);
-
-    if (!nome || !email || !estabelecimentoId) {
-      setMensagem("Preencha todos os campos obrigatórios!");
-      setErro(true);
-      return;
+    if (formData.password !== formData.confirmPassword) {
+      setError("As senhas não coincidem!")
+      return
     }
 
-    if (!validarEmail(email)) {
-      setMensagem("Email inválido!");
-      setErro(true);
-      return;
-    }
-
-    if (telefone && !validarTelefone(telefone)) {
-      setMensagem("Telefone inválido! Formato: (99) 99999-9999");
-      setErro(true);
-      return;
-    }
-
-    const dataBase = { nome, email, telefone, estabelecimento_id: Number(estabelecimentoId) };
-
-    try {
-      if (tipo === "cliente") {
-        const dataCliente = {
-          ...dataBase,
-          valor_gasto: Number(valorGasto),
-          frequencia: Number(frequencia),
-          valor_perdido: Number(valorPerdido),
-        };
-        await createCliente(dataCliente);
-      } else {
-        const dataProfissional = { ...dataBase, valor_recebido: Number(valorRecebido) };
-        await createProfissional(dataProfissional);
-      }
-
-      setMensagem(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} cadastrado com sucesso!`);
-      setErro(false);
-
-      // Resetar campos
-      setNome(""); setEmail(""); setTelefone("");
-      setValorGasto(0); setFrequencia(0); setValorPerdido(0); setValorRecebido(0);
-      setEstabelecimentoId("");
-
-    } catch (error) {
-      setMensagem("Erro ao cadastrar!");
-      setErro(true);
-    }
-  };
+    setError("")
+    console.log("Registrado com sucesso:", formData)
+    // Aqui você pode enviar para sua API ou Firebase
+  }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", maxWidth: "400px", gap: "10px", margin: "0 auto" }}>
-      <h2>Cadastrar Pessoa</h2>
-      <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-        <option value="cliente">Cliente</option>
-        <option value="profissional">Profissional</option>
-      </select>
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className={styles.container}
+    >
+      <h2 className={styles.title}>Criar Conta</h2>
 
-      <input placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
-      <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-      <input placeholder="Telefone (99) 99999-9999" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.inputGroup}>
+          <label htmlFor="username">Nome de Usuário</label>
+          <input
+            type="text"
+            id="username"
+            placeholder="Digite seu nome"
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+          />
+        </div>
 
-      <select value={estabelecimentoId} onChange={(e) => setEstabelecimentoId(e.target.value)} required>
-        <option value="">Escolha o estabelecimento</option>
-        {estabelecimentos.map((est) => (
-          <option key={est.id} value={est.id}>{est.nome}</option>
-        ))}
-      </select>
+        <div className={styles.inputGroup}>
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            placeholder="seuemail@exemplo.com"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          />
+        </div>
 
-      {tipo === "cliente" && (
-        <>
-          <input type="number" placeholder="Valor Gasto" value={valorGasto} min={0} step={0.01} onChange={(e) => setValorGasto(e.target.value)} />
-          <input type="number" placeholder="Frequência" value={frequencia} min={0} step={1} onChange={(e) => setFrequencia(e.target.value)} />
-          <input type="number" placeholder="Valor Perdido" value={valorPerdido} min={0} step={0.01} onChange={(e) => setValorPerdido(e.target.value)} />
-        </>
-      )}
+        <div className={styles.inputGroup}>
+          <label htmlFor="telephone">Telefone</label>
+          <input
+            type="tel"
+            id="telephone"
+            placeholder="(11) 99999-9999"
+            value={formData.telephone}
+            onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+          />
+        </div>
 
-      {tipo === "profissional" && (
-        <input type="number" placeholder="Valor Recebido" value={valorRecebido} min={0} step={0.01} onChange={(e) => setValorRecebido(e.target.value)} />
-      )}
+        <div className={styles.inputGroup}>
+          <label htmlFor="password">Senha</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Digite sua senha"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          />
+        </div>
 
-      <button type="submit" style={{ backgroundColor: "#4CAF50", color: "white", padding: "10px", border: "none", cursor: "pointer" }}>
-        Cadastrar {tipo.charAt(0).toUpperCase() + tipo.slice(1)}
-      </button>
+        <div className={styles.inputGroup}>
+          <label htmlFor="confirmPassword">Confirmar Senha</label>
+          <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Confirme sua senha"
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+          />
+        </div>
 
-      {mensagem && <p style={{ color: erro ? "red" : "green", fontWeight: "bold" }}>{mensagem}</p>}
-    </form>
-  );
+        {error && <p className={styles.error}>{error}</p>}
+
+        <motion.button
+          type="submit"
+          className={styles.submitButton}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Registrar
+        </motion.button>
+      </form>
+    </motion.div>
+  )
 }
+
+export default RegisterComponent
