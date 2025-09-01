@@ -18,6 +18,16 @@ As regras definidas aqui são úteis para garantir uma aparência consistente e 
   --color-neutral-white: #FFFFFF;
   --color-neutral-light: #F5F7FA;
   --color-text: #2A3342;
+  
+  --primary-color: #007bff;
+  --confirmado-color: #28a745;
+  --concluido-color: #6c757d;
+  --cancelado-color: #dc3545;
+  --agendado-color: #17a2b8;
+  --border-color: #e9ecef;
+  --grid-bg: #ffffff;
+  --header-bg: #f8f9fa;
+  --time-text-color: #6c757d;
 }
 
 html {

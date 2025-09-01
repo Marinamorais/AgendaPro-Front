@@ -1,51 +1,38 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import styles from '../BemVindo.module.css'; // Reuses the same CSS
+import { useForm } from 'react-hook-form'; // Importa a biblioteca
+import styles from '../BemVindo.module.css';
+import { createData, updateData } from '../../../../service/api';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-const ProductFormModal = ({ closeModal, establishmentId, onSuccess }) => {
-  // Internal state for the product form
-  const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    sale_price: '',
+const ProductFormModal = ({ closeModal, establishmentId, onSuccess, initialData }) => {
+  // Configuração do react-hook-form para validação
+  const { register, handleSubmit, formState: { errors, isValid }, setValue, watch } = useForm({
+    mode: "onChange", // Valida a cada mudança
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  // Handler for the inputs
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Handler to submit data to the API
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    const token = localStorage.getItem('authToken');
-
+  // Preenche o formulário com dados iniciais para edição
+  useEffect(() => {
+    if (initialData) {
+      setValue('name', initialData.name);
+      setValue('sku', initialData.sku);
+      setValue('sale_price', initialData.sale_price);
+    }
+  }, [initialData, setValue]);
+  
+  // Lida com a submissão do formulário
+  const onSubmit = async (formData) => {
     try {
-      const response = await fetch(`${apiUrl}/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ...formData, establishment_id: establishmentId })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Error creating product.');
-
-      onSuccess();  // Updates the list on the main page
-      closeModal(); // Closes the modal
-
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      if (initialData) {
+        await updateData('products', initialData.id, formData);
+      } else {
+        await createData('products', { ...formData, establishment_id: establishmentId });
+      }
+      onSuccess(); // Atualiza a lista na página principal
+      closeModal(); // Fecha o modal
+    } catch (error) {
+      // Idealmente, aqui você chamaria um toast de erro
+      alert(error.message || 'Ocorreu um erro.');
     }
   };
 
@@ -59,20 +46,62 @@ const ProductFormModal = ({ closeModal, establishmentId, onSuccess }) => {
     >
       <motion.div 
         className={styles.modalContent}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        initial={{ y: -30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -30, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={closeModal} className={styles.closeButton}>×</button>
-        <h2>New Product</h2>
-        <form onSubmit={handleSubmit}>
-          <input name="name" value={formData.name} onChange={handleChange} placeholder="Product Name" required />
-          <input name="sku" value={formData.sku} onChange={handleChange} placeholder="SKU (Code - Optional)" />
-          <input name="sale_price" type="number" value={formData.sale_price} onChange={handleChange} placeholder="Sale Price" required />
-          {error && <p className={styles.error}>{error}</p>}
-          <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.98 }}>
-            {loading ? 'Saving...' : 'Save Product'}
+        <h2>{initialData ? 'Editar Produto' : 'Novo Produto'}</h2>
+        
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="name">Nome do Produto</label>
+            <input 
+              id="name"
+              type="text"
+              className={errors.name ? styles.inputError : ''}
+              placeholder="Ex: Shampoo Hidratante" 
+              {...register("name", { required: "O nome é obrigatório." })}
+            />
+            {errors.name && <span className={styles.errorMessage}>{errors.name.message}</span>}
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="sku">SKU (Código)</label>
+            <input 
+              id="sku"
+              type="text"
+              placeholder="Ex: SH-001 (Opcional)" 
+              {...register("sku")}
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="sale_price">Preço de Venda (R$)</label>
+            <input 
+              id="sale_price"
+              type="number"
+              step="0.01"
+              className={errors.sale_price ? styles.inputError : ''}
+              placeholder="Ex: 49.90" 
+              {...register("sale_price", { 
+                required: "O preço é obrigatório.",
+                valueAsNumber: true,
+                min: { value: 0.01, message: "O preço deve ser positivo." }
+              })}
+            />
+            {errors.sale_price && <span className={styles.errorMessage}>{errors.sale_price.message}</span>}
+          </div>
+          
+          <motion.button 
+            type="submit" 
+            className={styles.submitButton}
+            disabled={!isValid} // O botão só é clicável se o formulário for válido
+            whileTap={{ scale: 0.98 }}
+          >
+            {initialData ? 'Salvar Alterações' : 'Adicionar Produto'}
           </motion.button>
         </form>
       </motion.div>

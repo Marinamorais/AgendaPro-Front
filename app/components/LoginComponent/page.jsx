@@ -1,13 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from 'next/navigation'; // 1. Importe o useRouter
+import { useRouter } from 'next/navigation';
 import styles from "./LoginComponent.module.css";
 
+// Acessa a URL da API a partir das variáveis de ambiente
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-const LoginComponent = () => { // 2. Remova 'onLogin' das props
-  const router = useRouter(); // 3. Inicialize o roteador
+const LoginComponent = () => {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -19,9 +20,9 @@ const LoginComponent = () => { // 2. Remova 'onLogin' das props
     setError("");
 
     if (!apiUrl) {
-      setError("Erro de configuração: A URL da API não foi encontrada.");
-      setLoading(false);
-      return;
+        setError("Erro de configuração: A URL da API não foi encontrada.");
+        setLoading(false);
+        return;
     }
 
     try {
@@ -39,10 +40,11 @@ const LoginComponent = () => { // 2. Remova 'onLogin' das props
         throw new Error(data.message || 'Erro ao tentar fazer login.');
       }
 
+      // Armazena o token e os dados do estabelecimento no navegador
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('establishment', JSON.stringify(data.establishment));
       
-      // 4. Redirecione para a página de boas-vindas com o ID do estabelecimento
+      // Redireciona para o dashboard principal
       router.push(`/Bemvindo/${data.establishment.id}`);
 
     } catch (err) {
@@ -52,7 +54,6 @@ const LoginComponent = () => { // 2. Remova 'onLogin' das props
     }
   };
 
-  // O resto do seu componente continua igual...
   return (
     <div className={styles.wrapper}>
       <motion.div
@@ -61,14 +62,15 @@ const LoginComponent = () => { // 2. Remova 'onLogin' das props
         transition={{ duration: 0.5, type: "spring", stiffness: 120 }}
         className={styles.loginBox}
       >
-        <h2 className={styles.title}>Bem vindo!</h2>
+        <h2 className={styles.title}>Bem-vindo de volta!</h2>
+        <p className={styles.subtitle}>Acesse seu centro de comando.</p>
         {error && <p className={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.inputGroup}>
             <span className={styles.icon}>👤</span>
             <input
               type="email"
-              placeholder="E-mail"
+              placeholder="E-mail do estabelecimento"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -93,9 +95,12 @@ const LoginComponent = () => { // 2. Remova 'onLogin' das props
             whileTap={{ scale: 0.95 }}
             disabled={loading}
           >
-            {loading ? "Entrando..." : "Login"}
+            {loading ? "Verificando..." : "Entrar"}
           </motion.button>
         </form>
+         <div className={styles.footer}>
+            <p>Não tem uma conta? <a href="/register">Crie uma agora</a></p>
+        </div>
       </motion.div>
     </div>
   );

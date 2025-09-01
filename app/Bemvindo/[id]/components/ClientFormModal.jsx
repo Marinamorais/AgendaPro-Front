@@ -1,51 +1,35 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import styles from '../BemVindo.module.css'; // Reutiliza o mesmo CSS
+import { useForm } from 'react-hook-form'; // 1. Importa o hook
+import styles from '../BemVindo.module.css';
+import { createData, updateData } from '../../../../service/api';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-
-const ClientFormModal = ({ closeModal, establishmentId, onSuccess }) => {
-  // Estado interno para o formulário de cliente
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    phone: '',
+const ClientFormModal = ({ closeModal, establishmentId, onSuccess, initialData }) => {
+  // 2. Configura o react-hook-form, incluindo valores padrão se estiver editando
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: {
+      full_name: initialData?.full_name || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || ''
+    }
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  // Handler para os inputs
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // Handler para submeter os dados para a API
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    const token = localStorage.getItem('authToken');
-
+  // A função de submissão agora recebe os dados validados diretamente
+  const onSubmit = async (formData) => {
     try {
-      const response = await fetch(`${apiUrl}/clients`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ...formData, establishment_id: establishmentId })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Erro ao criar cliente.');
-
-      onSuccess();  // Atualiza a lista na página principal
-      closeModal(); // Fecha o modal
-
+      if (initialData) {
+        // MODO EDIÇÃO
+        await updateData('clients', initialData.id, formData);
+      } else {
+        // MODO CRIAÇÃO
+        await createData('clients', { ...formData, establishment_id: establishmentId });
+      }
+      onSuccess();
+      closeModal();
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      // Em uma app real, você poderia setar um erro de formulário aqui
+      alert(err.message || "Ocorreu um erro inesperado.");
     }
   };
 
@@ -65,14 +49,50 @@ const ClientFormModal = ({ closeModal, establishmentId, onSuccess }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <button onClick={closeModal} className={styles.closeButton}>×</button>
-        <h2>Novo Cliente</h2>
-        <form onSubmit={handleSubmit}>
-          <input name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Nome Completo" required />
-          <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="E-mail (Opcional)" />
-          <input name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="Telefone (Opcional)" />
-          {error && <p className={styles.error}>{error}</p>}
-          <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.98 }}>
-            {loading ? 'Salvando...' : 'Salvar Cliente'}
+        <h2>{initialData ? 'Editar Cliente' : 'Novo Cliente'}</h2>
+        
+        {/* 3. O formulário agora usa o handleSubmit do react-hook-form */}
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+          <div className={styles.inputContainer}>
+            <label htmlFor="full_name">Nome Completo</label>
+            <input 
+              id="full_name"
+              {...register("full_name", { required: "O nome completo é obrigatório." })}
+              placeholder="Nome do Cliente"
+              className={errors.full_name ? styles.inputError : ""}
+            />
+            {errors.full_name && <p className={styles.errorMessage}>{errors.full_name.message}</p>}
+          </div>
+
+          <div className={styles.inputContainer}>
+            <label htmlFor="email">E-mail (Opcional)</label>
+            <input 
+              id="email"
+              type="email"
+              {...register("email", {
+                pattern: { // Adiciona validação de formato de e-mail
+                  value: /^\S+@\S+$/i,
+                  message: "Formato de e-mail inválido."
+                }
+              })}
+              placeholder="email@exemplo.com"
+              className={errors.email ? styles.inputError : ""}
+            />
+            {errors.email && <p className={styles.errorMessage}>{errors.email.message}</p>}
+          </div>
+
+          <div className={styles.inputContainer}>
+            <label htmlFor="phone">Telefone (Opcional)</label>
+            <input 
+              id="phone"
+              type="tel"
+              {...register("phone")}
+              placeholder="(XX) XXXXX-XXXX"
+            />
+          </div>
+
+          <motion.button type="submit" disabled={isSubmitting} className={styles.submitButton} whileTap={{ scale: 0.98 }}>
+            {isSubmitting ? 'Salvando...' : (initialData ? 'Salvar Alterações' : 'Criar Cliente')}
           </motion.button>
         </form>
       </motion.div>

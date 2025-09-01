@@ -1,22 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useRouter } from "next/navigation"; // 1. Importa o useRouter para redirecionamento
+import { useRouter } from "next/navigation";
 import styles from "./RegisterComponent.module.css";
-
-// Busca a URL da API do arquivo .env
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+import { registerEstablishment } from "../../services/api"; // Importa a função de registro do nosso serviço de API
 
 const RegisterComponent = () => {
-  const router = useRouter(); // Inicializa o roteador
+  const router = useRouter();
 
-  // 2. Alinha o estado do formulário com os campos esperados pela API
+  // Um único estado para o formulário, alinhado com os campos da API
   const [formData, setFormData] = useState({
-    name: "",          // 'name' em vez de 'username'
-    trade_name: "",    // Adiciona o nome fantasia
+    name: "",
+    trade_name: "",
     email: "",
-    phone: "",         // Renomeado de 'telephone' para 'phone'
-    plan: "premium",   // Define um plano padrão
+    phone: "",
+    plan: "teste", // Plano padrão
     password: "",
     confirmPassword: "",
   });
@@ -24,7 +22,7 @@ const RegisterComponent = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 3. Cria uma única função 'handleChange' para todos os inputs
+  // Uma única função para gerenciar a mudança em todos os inputs
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prevData) => ({
@@ -33,7 +31,7 @@ const RegisterComponent = () => {
     }));
   };
 
-  // 4. Implementa a lógica de submissão para a API
+  // Lógica de submissão do formulário para o backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -46,34 +44,23 @@ const RegisterComponent = () => {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/establishments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Envia apenas os dados que a API espera, sem o 'confirmPassword'
-        body: JSON.stringify({
-          name: formData.name,
-          trade_name: formData.trade_name,
-          email: formData.email,
-          phone: formData.phone,
-          plan: formData.plan,
-          password: formData.password,
-        }),
+      // Usa a função do nosso serviço de API para fazer a requisição
+      await registerEstablishment({
+        name: formData.name,
+        trade_name: formData.trade_name,
+        email: formData.email,
+        phone: formData.phone,
+        plan: formData.plan,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Falha ao registrar.");
-      }
-
-      // 5. Sucesso! Redireciona o usuário para a página de login.
-      alert("Registro realizado com sucesso! Você será redirecionado para o login.");
-      router.push('/'); // Assumindo que a rota '/' é a de login
+      // Se o registro for bem-sucedido, redireciona para a página de login com uma mensagem
+      alert("Registro realizado com sucesso! Você será redirecionado para a página de login.");
+      router.push('/'); 
 
     } catch (err) {
-      setError(err.message);
+      // Captura o erro retornado pelo Axios e exibe a mensagem da API
+      setError(err.response?.data?.message || "Falha ao registrar. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -86,10 +73,10 @@ const RegisterComponent = () => {
       transition={{ duration: 0.5 }}
       className={styles.container}
     >
-      <h2 className={styles.title}>Criar Conta de Estabelecimento</h2>
+      <h2 className={styles.title}>Crie sua Conta OiAgendaPro</h2>
+      <p className={styles.subtitle}>Comece a transformar seu negócio hoje mesmo.</p>
 
       <form className={styles.form} onSubmit={handleSubmit}>
-        {/* Inputs atualizados para usar 'handleChange' e os novos 'id's */}
         <div className={styles.inputGroup}>
           <label htmlFor="name">Nome do Estabelecimento</label>
           <input
@@ -114,7 +101,7 @@ const RegisterComponent = () => {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="email">Email de Acesso</label>
+          <label htmlFor="email">Seu Melhor Email</label>
           <input
             type="email"
             id="email"
@@ -126,7 +113,7 @@ const RegisterComponent = () => {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="phone">Telefone (Opcional)</label>
+          <label htmlFor="phone">Telefone / WhatsApp (Opcional)</label>
           <input
             type="tel"
             id="phone"
@@ -137,23 +124,24 @@ const RegisterComponent = () => {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="password">Senha</label>
+          <label htmlFor="password">Crie uma Senha</label>
           <input
             type="password"
             id="password"
-            placeholder="Digite sua senha"
+            placeholder="Mínimo 6 caracteres"
             value={formData.password}
             onChange={handleChange}
             required
+            minLength={6}
           />
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="confirmPassword">Confirmar Senha</label>
+          <label htmlFor="confirmPassword">Confirme sua Senha</label>
           <input
             type="password"
             id="confirmPassword"
-            placeholder="Confirme sua senha"
+            placeholder="Repita a senha"
             value={formData.confirmPassword}
             onChange={handleChange}
             required
@@ -169,8 +157,11 @@ const RegisterComponent = () => {
           whileTap={{ scale: 0.95 }}
           disabled={loading}
         >
-          {loading ? "Registrando..." : "Criar Conta"}
+          {loading ? "Criando conta..." : "Começar Teste Grátis de 14 Dias"}
         </motion.button>
+         <div className={styles.footer}>
+            <p>Já tem uma conta? <a href="/">Faça login</a></p>
+        </div>
       </form>
     </motion.div>
   );

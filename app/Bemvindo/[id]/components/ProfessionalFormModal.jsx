@@ -1,81 +1,92 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import styles from '../BemVindo.module.css'; // Reutiliza o mesmo CSS
+import styles from '../BemVindo.module.css';
+import { createData, updateData } from '../../../../service/api';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+// 1. Importa as ferramentas de validação
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
-const ProfessionalFormModal = ({ closeModal, establishmentId, onSuccess }) => {
-  // Estado interno para o formulário
-  const [formData, setFormData] = useState({
-    full_name: '',
-    email: '',
-    phone: '',
-    professional_role: ''
+// 2. Define o "contrato" dos dados do formulário com Zod
+const professionalSchema = z.object({
+  full_name: z.string().min(3, "O nome precisa ter no mínimo 3 caracteres."),
+  email: z.string().email("Por favor, insira um e-mail válido."),
+  phone: z.string().optional(),
+  professional_role: z.string().optional(),
+});
+
+const ProfessionalFormModal = ({ closeModal, establishmentId, onSuccess, initialData }) => {
+  // 3. Integra o react-hook-form com o schema do Zod
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm({
+    resolver: zodResolver(professionalSchema),
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  // Handler genérico para os inputs
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  // Efeito que preenche o formulário no modo de edição
+  useEffect(() => {
+    if (initialData) {
+      setValue('full_name', initialData.full_name || '');
+      setValue('email', initialData.email || '');
+      setValue('phone', initialData.phone || '');
+      setValue('professional_role', initialData.professional_role || '');
+    }
+  }, [initialData, setValue]);
 
-  // Handler para submeter os dados para a API
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    const token = localStorage.getItem('authToken');
-
+  // 4. A função de submit agora recebe os dados já validados
+  const onSubmit = async (formData) => {
     try {
-      const response = await fetch(`${apiUrl}/professionals`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ ...formData, establishment_id: establishmentId })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Erro ao criar profissional.');
-
-      onSuccess();  // Atualiza a lista na página principal
-      closeModal(); // Fecha o modal
-
+      if (initialData) {
+        await updateData('professionals', initialData.id, formData);
+      } else {
+        await createData('professionals', { ...formData, establishment_id: establishmentId });
+      }
+      onSuccess();
+      closeModal();
     } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      // Erros da API ainda podem ser tratados aqui
+      alert(err.message || 'Ocorreu um erro inesperado.');
     }
   };
 
   return (
-    // O container do Modal (Overlay e conteúdo)
-    <motion.div 
-      className={styles.overlay}
-      onClick={closeModal} // Fecha ao clicar no fundo
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <motion.div className={styles.overlay} onClick={closeModal} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div 
-        className={styles.modalContent}
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()} // Impede que o clique no formulário feche o modal
+        className={styles.modalContent} 
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -50, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
       >
         <button onClick={closeModal} className={styles.closeButton}>×</button>
-        <h2>Novo Profissional</h2>
-        <form onSubmit={handleSubmit}>
-          <input name="full_name" value={formData.full_name} onChange={handleChange} placeholder="Nome Completo" required />
-          <input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="E-mail" required />
-          <input name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="Telefone" />
-          <input name="professional_role" value={formData.professional_role} onChange={handleChange} placeholder="Cargo (Ex: Cabeleireiro)" />
-          {error && <p className={styles.error}>{error}</p>}
-          <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.98 }}>
-            {loading ? 'Salvando...' : 'Salvar Profissional'}
+        <h2>{initialData ? 'Editar Profissional' : 'Novo Profissional'}</h2>
+        
+        {/* 5. O formulário agora usa o handleSubmit do react-hook-form */}
+        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="full_name">Nome Completo</label>
+            <input id="full_name" {...register('full_name')} placeholder="Nome do profissional" />
+            {errors.full_name && <p className={styles.errorMessage}>{errors.full_name.message}</p>}
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="email">E-mail</label>
+            <input id="email" type="email" {...register('email')} placeholder="email@exemplo.com" />
+            {errors.email && <p className={styles.errorMessage}>{errors.email.message}</p>}
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="phone">Telefone (Opcional)</label>
+            <input id="phone" type="tel" {...register('phone')} placeholder="(55) 99999-9999" />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="professional_role">Cargo (Opcional)</label>
+            <input id="professional_role" {...register('professional_role')} placeholder="Ex: Cabeleireiro" />
+          </div>
+
+          <motion.button type="submit" className={styles.submitButton} disabled={isSubmitting} whileTap={{ scale: 0.98 }}>
+            {isSubmitting ? 'Salvando...' : (initialData ? 'Salvar Alterações' : 'Criar Profissional')}
           </motion.button>
         </form>
       </motion.div>
