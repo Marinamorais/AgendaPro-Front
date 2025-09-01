@@ -1,55 +1,66 @@
 "use client";
+
+// Imports
+import { useRouter } from 'next/navigation'; 
 import React, { useEffect, useState, useReducer, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
 import styles from './BemVindo.module.css';
-
-// 1. IMPORTAÇÃO CENTRALIZADA: Agora importamos tudo do nosso serviço de API.
-import { 
-  getProfessionals, 
-  getClients, 
-  getProducts, 
-  deleteData 
-} from '../../../services/api'; // Ajuste o caminho para o seu api.js
-
+import { fetchData, deleteData } from '../../../service/api';
 import ProfessionalFormModal from './components/ProfessionalFormModal';
 import ClientFormModal from './components/ClientFormModal';
-import ProductFormModal from './components-ProductFormModal';
+import ProductFormModal from './components/ProductFormModal';
 import List from './components/List';
 import ModalContainer from './components/ModalContainer';
 
+// Constantes e Reducer
 const TABS = {
   equipe: { label: 'Equipe', endpoint: 'professionals' },
   clientes: { label: 'Clientes', endpoint: 'clients' },
   produtos: { label: 'Produtos', endpoint: 'products' },
 };
 
-// ... (O reducer e initialState continuam os mesmos)
+const initialState = {
+  establishment: null,
+  data: { equipe: [], clientes: [], produtos: [] },
+  loading: true,
+  error: null,
+};
 
+function reducer(state, action) {
+  switch (action.type) {
+    case 'FETCH_START':
+      return { ...state, loading: true, error: null };
+    case 'FETCH_SUCCESS':
+      return { ...state, loading: false, data: action.payload };
+    case 'SET_ESTABLISHMENT':
+      return { ...state, establishment: action.payload };
+    case 'FETCH_ERROR':
+      return { ...state, loading: false, error: action.payload };
+    default:
+      throw new Error();
+  }
+}
+
+// Componente Principal
 const BemVindoPage = () => {
-  const router = useRouter();
   const [state, dispatch] = useReducer(reducer, initialState);
   const [modalType, setModalType] = useState(null);
   const [activeTab, setActiveTab] = useState('equipe');
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
 
   const { establishment, data, loading } = state;
 
-  // 2. LÓGICA DE BUSCA REATORADA: Agora usa as funções específicas do api.js
   const loadAllData = useCallback(async (establishmentId) => {
     dispatch({ type: 'FETCH_START' });
     try {
       const [professionalsData, clientsData, productsData] = await Promise.all([
-        getProfessionals(establishmentId),
-        getClients(establishmentId),
-        getProducts(establishmentId)
+        fetchData('professionals', establishmentId),
+        fetchData('clients', establishmentId),
+        fetchData('products', establishmentId)
       ]);
-      // Os dados já vêm prontos do axios, não precisa de .json()
-      dispatch({ 
-        type: 'FETCH_SUCCESS', 
-        payload: { equipe: professionalsData.data, clientes: clientsData.data, produtos: productsData.data } 
-      });
+      dispatch({ type: 'FETCH_SUCCESS', payload: { equipe: professionalsData, clientes: clientsData, produtos: productsData } });
     } catch (error) {
       dispatch({ type: 'FETCH_ERROR', payload: error.message });
     }
@@ -61,24 +72,21 @@ const BemVindoPage = () => {
       const establishmentObject = JSON.parse(establishmentData);
       dispatch({ type: 'SET_ESTABLISHMENT', payload: establishmentObject });
       loadAllData(establishmentObject.id);
-    } else {
-        // Se não encontrar dados do estabelecimento, redireciona para o login
-        router.push('/');
     }
-  }, [loadAllData, router]);
+  }, [loadAllData]);
 
-  const handleSuccess = () => {
+  const handleSuccess = useCallback(() => {
     if (establishment) loadAllData(establishment.id);
     setModalType(null);
     setEditingItem(null);
-  };
+  }, [establishment, loadAllData]);
   
-  const handleEdit = (item) => {
+  const handleEdit = useCallback((item) => {
     setEditingItem(item);
     setModalType(activeTab);
-  };
+  }, [activeTab]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     const endpoint = TABS[activeTab].endpoint;
     const item = data[activeTab].find(i => i.id === id);
     const itemName = item?.full_name || item?.name || 'item';
@@ -88,39 +96,89 @@ const BemVindoPage = () => {
         await deleteData(endpoint, id);
         if (establishment) loadAllData(establishment.id);
       } catch (error) {
-        alert(error.response?.data?.message || 'Falha ao deletar.');
+        alert(error.message);
       }
     }
-  };
+  }, [activeTab, data, establishment, loadAllData]);
 
-  const handleSelectProfessional = (professionalId) => {
-    if (establishment) {
+  const handleProfessionalSelect = useCallback((professionalId) => {
+    if (establishment?.id && professionalId) {
       router.push(`/Bemvindo/${establishment.id}/${professionalId}`);
     }
-  };
+  }, [establishment?.id, router]);
 
-  // ... (filteredData e renderModal continuam os mesmos)
+  const filteredData = useMemo(() => {
+    if (!searchTerm) {
+      return data[activeTab];
+    }
+    return data[activeTab].filter(item =>
+      (item.full_name || item.name).toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, data, activeTab]);
+
+  const renderModal = () => {
+    if (!modalType) return null;
+    const commonProps = {
+      establishmentId: establishment?.id,
+      onSuccess: handleSuccess,
+      closeModal: () => { setModalType(null); setEditingItem(null); },
+      initialData: editingItem,
+    };
+    switch (modalType) {
+      case 'equipe': return <ProfessionalFormModal {...commonProps} />;
+      case 'clientes': return <ClientFormModal {...commonProps} />;
+      case 'produtos': return <ProductFormModal {...commonProps} />;
+      default: return null;
+    }
+  };
 
   return (
     <div className={styles.dashboard}>
-      {/* ... (O JSX do Header, KPIs, Main, Abas, Busca e Modal continuam exatamente os mesmos) ... */}
-      {/* ... A única diferença é que agora o List recebe onSelect dinamicamente ... */}
+      <header className={styles.header}>
+        <h1>Bem-vindo, {establishment?.name || 'Carregando...'}!</h1>
+        <p>Este é o seu centro de comando. Decisões inteligentes começam aqui.</p>
+      </header>
 
-      <AnimatePresence mode="wait">
-        <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-          {loading ? <p>Carregando dados...</p> : 
-            <List 
-              items={filteredData} 
-              type={activeTab} 
-              onEdit={handleEdit} 
-              onDelete={handleDelete}
-              onSelect={activeTab === 'equipe' ? handleSelectProfessional : null}
-            />
-          }
-        </motion.div>
+      <div className={styles.kpiGrid}>
+        <div className={styles.kpiCard}><h2>Clientes Ativos</h2><p>{loading ? '...' : data.clientes.length}</p></div>
+        <div className={styles.kpiCard}><h2>Profissionais</h2><p>{loading ? '...' : data.equipe.length}</p></div>
+        <div className={styles.kpiCard}><h2>Produtos</h2><p>{loading ? '...' : data.produtos.length}</p></div>
+        <div className={styles.kpiCard}><h2>Faturamento (Mês)</h2><p>R$ --,--</p><span>(Em breve)</span></div>
+      </div>
+
+      <main className={styles.mainContent}>
+        <div className={styles.sectionHeader}>
+          <div className={styles.tabs}>
+            {Object.keys(TABS).map(tabKey => (
+              <button key={tabKey} onClick={() => setActiveTab(tabKey)} className={activeTab === tabKey ? styles.activeTab : ''}>
+                {TABS[tabKey].label}
+              </button>
+            ))}
+          </div>
+          <div className={styles.searchWrapper}>
+             <input type="text" placeholder={`Buscar em ${TABS[activeTab].label}...`} className={styles.searchInput} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          </div>
+          <motion.button onClick={() => { setEditingItem(null); setModalType(activeTab); }} className={styles.addButton} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            + Adicionar
+          </motion.button>
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            {loading ? <p>Carregando dados...</p> : 
+              <List 
+                items={filteredData} 
+                type={activeTab} 
+                onEdit={handleEdit} 
+                onDelete={handleDelete}
+                onSelect={activeTab === 'equipe' ? handleProfessionalSelect : null}
+              />
+            }
+          </motion.div>
+        </AnimatePresence>
+      </main>
+      <AnimatePresence>
+        {modalType && <ModalContainer closeModal={() => { setModalType(null); setEditingItem(null); }}>{renderModal()}</ModalContainer>}
       </AnimatePresence>
-      
-      {/* ... (Restante do JSX) ... */}
     </div>
   );
 };
