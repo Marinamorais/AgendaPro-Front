@@ -1,18 +1,51 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 import styles from '../BemVindo.module.css';
 import { api } from '../../../../service/api';
-import useApi from '../hooks/useApi'; // Hook genérico para chamadas de API
-import useDebounce from '../hooks/useDebounce'; // Hook para debounce da busca
-import Table from './Table'; // Novo componente de tabela reutilizável
+import useApi from '../hooks/useApi';
+import useDebounce from '../hooks/useDebounce';
+import Table from './Table';
 
-// Componente para o painel de detalhes do cliente
-const ClienteDetailPanel = ({ cliente, onEdit, onDelete, onClose }) => {
+// --- Subcomponente para o Histórico de Atendimentos ---
+const AppointmentHistory = ({ clientId, establishmentId }) => {
+    const { data: history, loading } = useApi(() => 
+        api.getAppointments({ establishment_id: establishmentId, client_id: clientId }),
+        [clientId, establishmentId]
+    );
+
+    if (loading) return <p>Carregando histórico...</p>;
+    if (!history || history.length === 0) return <p>Nenhum atendimento encontrado.</p>;
+
+    return (
+        <table className={styles.historyTable}>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Serviço</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {history.sort((a,b) => new Date(b.start_time) - new Date(a.start_time)).map(app => (
+                    <tr key={app.id}>
+                        <td>{format(parseISO(app.start_time), 'dd/MM/yy', { locale: ptBR })}</td>
+                        <td>{app.service_name}</td>
+                        <td>{app.status}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    );
+};
+
+
+// --- Subcomponente para o Painel de Detalhes do Cliente ---
+const ClienteDetailPanel = ({ cliente, establishmentId, onEdit, onDelete, onClose }) => {
     if (!cliente) {
         return (
             <div className={`${styles.detailPanel} ${styles.placeholder}`}>
@@ -36,23 +69,24 @@ const ClienteDetailPanel = ({ cliente, onEdit, onDelete, onClose }) => {
                 <h4>{cliente.full_name}</h4>
                 <p><strong>Email:</strong> {cliente.email || 'Não informado'}</p>
                 <p><strong>Telefone:</strong> {cliente.phone || 'Não informado'}</p>
-                <p><strong>Último Atendimento:</strong> {cliente.last_appointment ? format(new Date(cliente.last_appointment), 'dd/MM/yyyy', { locale: ptBR }) : 'Nenhum'}</p>
+                <p>
+                    <strong>Último Atendimento:</strong> {cliente.last_appointment ? format(parseISO(cliente.last_appointment), 'dd/MM/yyyy', { locale: ptBR }) : 'Nenhum'}
+                </p>
                 
                 <div className={styles.kpiGridSmall}>
                     <div className={styles.kpiCardSmall}>
                         <span>Total Gasto</span>
-                        <strong>R$ {cliente.total_spent || '0,00'}</strong>
+                        <strong>{(cliente.total_spent || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
                     </div>
                     <div className={styles.kpiCardSmall}>
                         <span>Ticket Médio</span>
-                        <strong>R$ {cliente.avg_ticket || '0,00'}</strong>
+                        <strong>{(cliente.avg_ticket || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
                     </div>
                 </div>
 
                 <div className={styles.historySection}>
                     <h5>Histórico de Atendimentos</h5>
-                    {/* Aqui viria uma lista/tabela de agendamentos do cliente */}
-                    <p className={styles.placeholderText}>(Funcionalidade de histórico em breve)</p>
+                    <AppointmentHistory clientId={cliente.id} establishmentId={establishmentId} />
                 </div>
             </div>
             <div className={styles.panelFooter}>
@@ -63,32 +97,29 @@ const ClienteDetailPanel = ({ cliente, onEdit, onDelete, onClose }) => {
     );
 };
 
-
-// Componente principal da aba Clientes
+// --- Componente Principal da Aba Clientes ---
 const Clientes = ({ establishmentId, onAdd, onEdit, onDelete }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'full_name', direction: 'ascending' });
     const [selectedCliente, setSelectedCliente] = useState(null);
 
-    const debouncedSearchTerm = useDebounce(searchTerm, 300); // 300ms de delay
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    // Usando o hook de API para buscar os clientes
-    const { data: clientes, loading, error, setData: setClientes } = useApi(() => 
+    const { data: clientes, loading, error } = useApi(() => 
         api.get('clients', { 
             establishment_id: establishmentId,
             search: debouncedSearchTerm,
             sortBy: sortConfig.key,
             order: sortConfig.direction,
         }),
-        [establishmentId, debouncedSearchTerm, sortConfig] // Dependências da busca
+        [establishmentId, debouncedSearchTerm, sortConfig]
     );
     
-    // Configuração das colunas da tabela
     const columns = useMemo(() => [
         { key: 'full_name', label: 'Cliente' },
-        { key: 'last_appointment', label: 'Último Atendimento', render: (date) => date ? format(new Date(date), 'dd/MM/yyyy') : '-' },
-        { key: 'total_spent', label: 'Total Gasto', render: (value) => `R$ ${value || '0,00'}` },
-        { key: 'avg_ticket', label: 'Ticket Médio', render: (value) => `R$ ${value || '0,00'}` },
+        { key: 'last_appointment', label: 'Último Atendimento', render: (date) => date ? format(parseISO(date), 'dd/MM/yyyy') : '-' },
+        { key: 'total_spent', label: 'Total Gasto', render: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })},
+        { key: 'avg_ticket', label: 'Ticket Médio', render: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })},
     ], []);
 
     const handleSort = (key) => {
@@ -102,19 +133,28 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete }) => {
         setSelectedCliente(cliente);
     };
 
+    // Atualiza o painel de detalhes se o cliente selecionado for editado/deletado
+    useEffect(() => {
+        if (selectedCliente && clientes) {
+            const updatedClient = clientes.find(c => c.id === selectedCliente.id);
+            setSelectedCliente(updatedClient || null);
+        }
+    }, [clientes, selectedCliente]);
+
     return (
         <div className={styles.crmContainer}>
             <div className={styles.listPanel}>
                  <div className={styles.listHeader}>
                     <input
                         type="text"
-                        placeholder="Pesquisar por nome, telefone, nota..."
+                        placeholder="Pesquisar por nome, email..."
                         className={styles.searchInputFull}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                     <button className={styles.primaryButton} onClick={onAdd}>+ Novo Cliente</button>
                 </div>
+                {error && <p className={styles.errorMessage}>{error}</p>}
                 <Table
                     columns={columns}
                     data={clientes}
@@ -130,7 +170,8 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete }) => {
             </div>
             
             <ClienteDetailPanel 
-                cliente={selectedCliente} 
+                cliente={selectedCliente}
+                establishmentId={establishmentId}
                 onEdit={onEdit} 
                 onDelete={onDelete} 
                 onClose={() => setSelectedCliente(null)}

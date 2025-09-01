@@ -118,6 +118,9 @@ const HeaderComponent = () => {
   // Atalhos: L = login, R = register, ESC = fechar
   useEffect(() => {
     const onKey = (e) => {
+      // CORREÇÃO: Verifica se e.key existe antes de usá-lo.
+      if (!e.key) return; 
+
       if (e.key.toLowerCase() === 'l' && !open) openLogin();
       if (e.key.toLowerCase() === 'r' && !open) openRegister();
       if (e.key === 'Escape' && open) close();
