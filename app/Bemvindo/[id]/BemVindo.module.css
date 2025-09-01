@@ -323,3 +323,47 @@
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
+
+/* Adicione estas classes ao final do seu arquivo BemVindo.module.css */
+
+.mainContent {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.dashboardContent {
+    padding-top: 1rem;
+}
+
+.dashboardPlaceholder {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3rem;
+}
+
+.chartPlaceholder, .tablePlaceholder {
+    background: #f9fafb;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    color: #9ca3af;
+    border: 1px dashed #d1d5db;
+}
+
+.chartPlaceholder h3, .tablePlaceholder h3 {
+    color: #4b5563;
+    margin-bottom: 1rem;
+}
+
+.tablePlaceholder {
+    grid-column: 1 / -1; 
+}
+
+.emptyMessage {
+  text-align: center;
+  padding: 3rem;
+  color: #888;
+}

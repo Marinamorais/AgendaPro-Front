@@ -11,17 +11,19 @@ import ClientFormModal from './components/ClientFormModal';
 import ProductFormModal from './components/ProductFormModal';
 import List from './components/List';
 import ModalContainer from './components/ModalContainer';
+import DashboardComponent from './components/DashboardComponent'; // Novo componente de dashboard
 
 // Constantes e Reducer
 const TABS = {
-  equipe: { label: 'Equipe', endpoint: 'professionals' },
+  dashboard: { label: 'Dashboard', endpoint: null }, // Aba do Dashboard
+  profissionais: { label: 'Profissionais', endpoint: 'professionals' }, // Renomeado de 'equipe'
   clientes: { label: 'Clientes', endpoint: 'clients' },
   produtos: { label: 'Produtos', endpoint: 'products' },
 };
 
 const initialState = {
   establishment: null,
-  data: { equipe: [], clientes: [], produtos: [] },
+  data: { profissionais: [], clientes: [], produtos: [] }, // Renomeado de 'equipe'
   loading: true,
   error: null,
 };
@@ -45,7 +47,7 @@ function reducer(state, action) {
 const BemVindoPage = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [modalType, setModalType] = useState(null);
-  const [activeTab, setActiveTab] = useState('equipe');
+  const [activeTab, setActiveTab] = useState('dashboard'); // A aba inicial agora é o dashboard
   const [editingItem, setEditingItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
@@ -60,7 +62,7 @@ const BemVindoPage = () => {
         fetchData('clients', establishmentId),
         fetchData('products', establishmentId)
       ]);
-      dispatch({ type: 'FETCH_SUCCESS', payload: { equipe: professionalsData, clientes: clientsData, produtos: productsData } });
+      dispatch({ type: 'FETCH_SUCCESS', payload: { profissionais: professionalsData, clientes: clientsData, produtos: productsData } });
     } catch (error) {
       dispatch({ type: 'FETCH_ERROR', payload: error.message });
     }
@@ -88,6 +90,8 @@ const BemVindoPage = () => {
 
   const handleDelete = useCallback(async (id) => {
     const endpoint = TABS[activeTab].endpoint;
+    if (!endpoint) return;
+
     const item = data[activeTab].find(i => i.id === id);
     const itemName = item?.full_name || item?.name || 'item';
     
@@ -108,8 +112,8 @@ const BemVindoPage = () => {
   }, [establishment?.id, router]);
 
   const filteredData = useMemo(() => {
-    if (!searchTerm) {
-      return data[activeTab];
+    if (activeTab === 'dashboard' || !searchTerm) {
+      return data[activeTab] || [];
     }
     return data[activeTab].filter(item =>
       (item.full_name || item.name).toLowerCase().includes(searchTerm.toLowerCase())
@@ -117,7 +121,7 @@ const BemVindoPage = () => {
   }, [searchTerm, data, activeTab]);
 
   const renderModal = () => {
-    if (!modalType) return null;
+    if (!modalType || modalType === 'dashboard') return null;
     const commonProps = {
       establishmentId: establishment?.id,
       onSuccess: handleSuccess,
@@ -125,11 +129,27 @@ const BemVindoPage = () => {
       initialData: editingItem,
     };
     switch (modalType) {
-      case 'equipe': return <ProfessionalFormModal {...commonProps} />;
+      case 'profissionais': return <ProfessionalFormModal {...commonProps} />;
       case 'clientes': return <ClientFormModal {...commonProps} />;
       case 'produtos': return <ProductFormModal {...commonProps} />;
       default: return null;
     }
+  };
+  
+  const renderContent = () => {
+    if (loading) return <p>Carregando dados...</p>;
+    if (activeTab === 'dashboard') {
+        return <DashboardComponent data={data} loading={loading} />;
+    }
+    return (
+        <List 
+            items={filteredData} 
+            type={activeTab} 
+            onEdit={handleEdit} 
+            onDelete={handleDelete}
+            onSelect={activeTab === 'profissionais' ? handleProfessionalSelect : null}
+        />
+    );
   };
 
   return (
@@ -138,14 +158,7 @@ const BemVindoPage = () => {
         <h1>Bem-vindo, {establishment?.name || 'Carregando...'}!</h1>
         <p>Este é o seu centro de comando. Decisões inteligentes começam aqui.</p>
       </header>
-
-      <div className={styles.kpiGrid}>
-        <div className={styles.kpiCard}><h2>Clientes Ativos</h2><p>{loading ? '...' : data.clientes.length}</p></div>
-        <div className={styles.kpiCard}><h2>Profissionais</h2><p>{loading ? '...' : data.equipe.length}</p></div>
-        <div className={styles.kpiCard}><h2>Produtos</h2><p>{loading ? '...' : data.produtos.length}</p></div>
-        <div className={styles.kpiCard}><h2>Faturamento (Mês)</h2><p>R$ --,--</p><span>(Em breve)</span></div>
-      </div>
-
+      
       <main className={styles.mainContent}>
         <div className={styles.sectionHeader}>
           <div className={styles.tabs}>
@@ -155,24 +168,20 @@ const BemVindoPage = () => {
               </button>
             ))}
           </div>
-          <div className={styles.searchWrapper}>
-             <input type="text" placeholder={`Buscar em ${TABS[activeTab].label}...`} className={styles.searchInput} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          </div>
-          <motion.button onClick={() => { setEditingItem(null); setModalType(activeTab); }} className={styles.addButton} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            + Adicionar
-          </motion.button>
+          {activeTab !== 'dashboard' && (
+            <>
+              <div className={styles.searchWrapper}>
+                 <input type="text" placeholder={`Buscar em ${TABS[activeTab].label}...`} className={styles.searchInput} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              </div>
+              <motion.button onClick={() => { setEditingItem(null); setModalType(activeTab); }} className={styles.addButton} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                + Adicionar
+              </motion.button>
+            </>
+          )}
         </div>
         <AnimatePresence mode="wait">
           <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            {loading ? <p>Carregando dados...</p> : 
-              <List 
-                items={filteredData} 
-                type={activeTab} 
-                onEdit={handleEdit} 
-                onDelete={handleDelete}
-                onSelect={activeTab === 'equipe' ? handleProfessionalSelect : null}
-              />
-            }
+            {renderContent()}
           </motion.div>
         </AnimatePresence>
       </main>

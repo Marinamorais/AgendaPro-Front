@@ -3,18 +3,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { motion } from 'framer-motion';
-// Supondo que o CSS do List esteja no mesmo arquivo do BemVindo.module.css
-// Se for um arquivo separado, ajuste o import. Ex: import styles from './List.module.css';
 import styles from '../BemVindo.module.css';
 
-// Função auxiliar movida para fora do componente para evitar recriação
+// Função auxiliar atualizada para 'profissionais'
 const getItemDetails = (item, itemType) => {
   switch (itemType) {
     case 'produtos':
       return { name: item.name, detail: `R$ ${item.sale_price}` };
     case 'clientes':
       return { name: item.full_name, detail: item.email };
-    case 'equipe':
+    case 'profissionais': // Atualizado de 'equipe'
     default:
       return { name: item.full_name, detail: item.professional_role };
   }
@@ -43,8 +41,6 @@ const List = ({ items, type, onEdit, onDelete, onSelect }) => {
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ delay: index * 0.05 }}
-            
-            // Melhorias de acessibilidade
             role={onSelect ? "button" : "group"}
             tabIndex={onSelect ? 0 : -1}
             onClick={handleSelect}
@@ -85,18 +81,17 @@ const List = ({ items, type, onEdit, onDelete, onSelect }) => {
   );
 };
 
-// Definição das PropTypes para robustez
+// PropTypes atualizadas
 List.propTypes = {
     items: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
         name: PropTypes.string,
         full_name: PropTypes.string,
     })).isRequired,
-    type: PropTypes.oneOf(['equipe', 'clientes', 'produtos']).isRequired,
+    type: PropTypes.oneOf(['profissionais', 'clientes', 'produtos']).isRequired, // Atualizado
     onEdit: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onSelect: PropTypes.func,
 };
 
-// Envolver com React.memo para otimização de performance
 export default React.memo(List);
