@@ -1,195 +1,197 @@
 "use client";
 
-// Imports
-import { useRouter } from 'next/navigation'; 
-import React, { useEffect, useState, useReducer, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// --- Imports de Componentes e Hooks ---
 import styles from './BemVindo.module.css';
-import { fetchData, deleteData } from '../../../service/api';
+import { api } from '../../../service/api';
+import { useToast, ToastProvider } from './contexts/ToastProvider';
+import DashboardComponent from './components/DashboardComponent';
+import Clientes from './components/Clientes'; // O novo componente de CRM
+import List from './components/List';
+import ConfirmationDialog from './components/ConfirmationDialog';
 import ProfessionalFormModal from './components/ProfessionalFormModal';
 import ClientFormModal from './components/ClientFormModal';
 import ProductFormModal from './components/ProductFormModal';
-import List from './components/List';
-import ModalContainer from './components/ModalContainer';
-import DashboardComponent from './components/DashboardComponent'; // Novo componente de dashboard
 
-// Constantes e Reducer
-const TABS = {
-  dashboard: { label: 'Dashboard', endpoint: null }, // Aba do Dashboard
-  profissionais: { label: 'Profissionais', endpoint: 'professionals' }, // Renomeado de 'equipe'
-  clientes: { label: 'Clientes', endpoint: 'clients' },
-  produtos: { label: 'Produtos', endpoint: 'products' },
+// --- Configuração das Abas ---
+const TABS_CONFIG = {
+  dashboard: { label: 'Dashboard', component: DashboardComponent, endpoint: null },
+  clientes: { label: 'Clientes', component: Clientes, endpoint: 'clients' },
+  profissionais: { label: 'Profissionais', component: List, endpoint: 'professionals' },
+  produtos: { label: 'Produtos', component: List, endpoint: 'products' },
+  // Adicione outras abas aqui no futuro
 };
 
-const initialState = {
-  establishment: null,
-  data: { profissionais: [], clientes: [], produtos: [] }, // Renomeado de 'equipe'
-  loading: true,
-  error: null,
-};
+// --- Componente Wrapper com Provider ---
+// Para que os componentes filhos possam usar o `useToast`
+const BemVindoPageWrapper = () => (
+    <ToastProvider>
+        <BemVindoPage />
+    </ToastProvider>
+);
 
-function reducer(state, action) {
-  switch (action.type) {
-    case 'FETCH_START':
-      return { ...state, loading: true, error: null };
-    case 'FETCH_SUCCESS':
-      return { ...state, loading: false, data: action.payload };
-    case 'SET_ESTABLISHMENT':
-      return { ...state, establishment: action.payload };
-    case 'FETCH_ERROR':
-      return { ...state, loading: false, error: action.payload };
-    default:
-      throw new Error();
-  }
-}
 
-// Componente Principal
+// --- Componente Principal da Página ---
 const BemVindoPage = () => {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [modalType, setModalType] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard'); // A aba inicial agora é o dashboard
-  const [editingItem, setEditingItem] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
+  const params = useParams();
+  const { id: establishmentId } = params;
+  const { addToast } = useToast();
 
-  const { establishment, data, loading } = state;
-
-  const loadAllData = useCallback(async (establishmentId) => {
-    dispatch({ type: 'FETCH_START' });
-    try {
-      const [professionalsData, clientsData, productsData] = await Promise.all([
-        fetchData('professionals', establishmentId),
-        fetchData('clients', establishmentId),
-        fetchData('products', establishmentId)
-      ]);
-      dispatch({ type: 'FETCH_SUCCESS', payload: { profissionais: professionalsData, clientes: clientsData, produtos: productsData } });
-    } catch (error) {
-      dispatch({ type: 'FETCH_ERROR', payload: error.message });
+  const [establishment, setEstablishment] = useState(null);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Estado para modais e diálogos
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  
+  // Efeito para carregar dados do estabelecimento do localStorage
+  useEffect(() => {
+    const storedData = localStorage.getItem('establishment');
+    if (storedData) {
+      setEstablishment(JSON.parse(storedData));
+    } else {
+      // Em um app real, redirecionaria para o login se não houver dados
+      console.error("Dados do estabelecimento não encontrados.");
+      addToast("Erro: Faça login novamente.", 'error');
+      router.push('/');
     }
+  }, [router, addToast]);
+
+  // --- Handlers para Modais e Ações ---
+  const openModal = useCallback((item = null) => {
+    setEditingItem(item);
+    setIsModalOpen(true);
   }, []);
 
-  useEffect(() => {
-    const establishmentData = localStorage.getItem('establishment');
-    if (establishmentData) {
-      const establishmentObject = JSON.parse(establishmentData);
-      dispatch({ type: 'SET_ESTABLISHMENT', payload: establishmentObject });
-      loadAllData(establishmentObject.id);
-    }
-  }, [loadAllData]);
-
-  const handleSuccess = useCallback(() => {
-    if (establishment) loadAllData(establishment.id);
-    setModalType(null);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
     setEditingItem(null);
-  }, [establishment, loadAllData]);
-  
-  const handleEdit = useCallback((item) => {
-    setEditingItem(item);
-    setModalType(activeTab);
-  }, [activeTab]);
+  }, []);
 
-  const handleDelete = useCallback(async (id) => {
-    const endpoint = TABS[activeTab].endpoint;
-    if (!endpoint) return;
+  const openDeleteDialog = useCallback((item) => {
+    setItemToDelete(item);
+  }, []);
 
-    const item = data[activeTab].find(i => i.id === id);
-    const itemName = item?.full_name || item?.name || 'item';
-    
-    if (window.confirm(`Tem certeza que deseja deletar "${itemName}"?`)) {
-      try {
-        await deleteData(endpoint, id);
-        if (establishment) loadAllData(establishment.id);
-      } catch (error) {
-        alert(error.message);
-      }
+  // --- Lógica de Sucesso e Deleção ---
+  // O estado dos dados agora é gerenciado dentro de cada componente de aba
+  // para mantê-los independentes. Esta função serve para notificar.
+  const handleSuccess = useCallback(() => {
+    closeModal();
+    addToast(editingItem ? 'Item atualizado com sucesso!' : 'Item criado com sucesso!', 'success');
+    // A atualização dos dados será feita pelo componente da aba ativa.
+  }, [closeModal, addToast, editingItem]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!itemToDelete) return;
+    const endpoint = TABS_CONFIG[activeTab].endpoint;
+
+    try {
+      await api.delete(endpoint, itemToDelete.id);
+      addToast(`"${itemToDelete.full_name || itemToDelete.name}" foi deletado.`, 'success');
+      // A atualização dos dados também será feita pelo componente da aba
+    } catch (error) {
+      addToast(`Erro ao deletar: ${error.message}`, 'error');
+    } finally {
+      setItemToDelete(null);
     }
-  }, [activeTab, data, establishment, loadAllData]);
+  }, [itemToDelete, activeTab, addToast]);
 
-  const handleProfessionalSelect = useCallback((professionalId) => {
-    if (establishment?.id && professionalId) {
-      router.push(`/Bemvindo/${establishment.id}/${professionalId}`);
-    }
-  }, [establishment?.id, router]);
+  // --- Renderização ---
+  const ActiveComponent = TABS_CONFIG[activeTab].component;
 
-  const filteredData = useMemo(() => {
-    if (activeTab === 'dashboard' || !searchTerm) {
-      return data[activeTab] || [];
-    }
-    return data[activeTab].filter(item =>
-      (item.full_name || item.name).toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, data, activeTab]);
-
-  const renderModal = () => {
-    if (!modalType || modalType === 'dashboard') return null;
+  const renderModalContent = () => {
     const commonProps = {
-      establishmentId: establishment?.id,
+      establishmentId,
       onSuccess: handleSuccess,
-      closeModal: () => { setModalType(null); setEditingItem(null); },
+      closeModal,
       initialData: editingItem,
     };
-    switch (modalType) {
+    switch (activeTab) {
       case 'profissionais': return <ProfessionalFormModal {...commonProps} />;
       case 'clientes': return <ClientFormModal {...commonProps} />;
       case 'produtos': return <ProductFormModal {...commonProps} />;
       default: return null;
     }
   };
-  
-  const renderContent = () => {
-    if (loading) return <p>Carregando dados...</p>;
-    if (activeTab === 'dashboard') {
-        return <DashboardComponent data={data} loading={loading} />;
-    }
-    return (
-        <List 
-            items={filteredData} 
-            type={activeTab} 
-            onEdit={handleEdit} 
-            onDelete={handleDelete}
-            onSelect={activeTab === 'profissionais' ? handleProfessionalSelect : null}
-        />
-    );
-  };
 
   return (
-    <div className={styles.dashboard}>
-      <header className={styles.header}>
-        <h1>Bem-vindo, {establishment?.name || 'Carregando...'}!</h1>
-        <p>Este é o seu centro de comando. Decisões inteligentes começam aqui.</p>
-      </header>
+    <div className={styles.pageWrapper}>
+      <aside className={styles.sidebar}>
+        <div className={styles.brand}>
+          <img src="https://i.imgur.com/0SkCPnh.png" alt="Logo" />
+          <span>OiAgendaPro</span>
+        </div>
+        <nav className={styles.sidebarNav}>
+          {Object.entries(TABS_CONFIG).map(([key, { label }]) => (
+            <button
+              key={key}
+              className={activeTab === key ? styles.active : ''}
+              onClick={() => setActiveTab(key)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        <div className={styles.sidebarFooter}>
+            {/* Espaço para configurações, etc. */}
+        </div>
+      </aside>
       
       <main className={styles.mainContent}>
-        <div className={styles.sectionHeader}>
-          <div className={styles.tabs}>
-            {Object.keys(TABS).map(tabKey => (
-              <button key={tabKey} onClick={() => setActiveTab(tabKey)} className={activeTab === tabKey ? styles.activeTab : ''}>
-                {TABS[tabKey].label}
-              </button>
-            ))}
-          </div>
-          {activeTab !== 'dashboard' && (
-            <>
-              <div className={styles.searchWrapper}>
-                 <input type="text" placeholder={`Buscar em ${TABS[activeTab].label}...`} className={styles.searchInput} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-              </div>
-              <motion.button onClick={() => { setEditingItem(null); setModalType(activeTab); }} className={styles.addButton} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                + Adicionar
-              </motion.button>
-            </>
-          )}
+        <header className={styles.mainHeader}>
+          <h1>{establishment?.name || 'Carregando...'}</h1>
+          <p>Seu centro de comando para decisões inteligentes.</p>
+        </header>
+        
+        <div className={styles.contentArea}>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    {ActiveComponent && (
+                        <ActiveComponent
+                            establishmentId={establishmentId}
+                            onAdd={() => openModal()}
+                            onEdit={openModal}
+                            onDelete={openDeleteDialog}
+                            // A prop `key` força a remontagem do componente ao deletar,
+                            // o que aciona a busca de dados atualizada.
+                            key={`${activeTab}-${itemToDelete}`} 
+                        />
+                    )}
+                </motion.div>
+            </AnimatePresence>
         </div>
-        <AnimatePresence mode="wait">
-          <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
       </main>
+
+      {/* --- Modais e Diálogos --- */}
       <AnimatePresence>
-        {modalType && <ModalContainer closeModal={() => { setModalType(null); setEditingItem(null); }}>{renderModal()}</ModalContainer>}
+        {isModalOpen && activeTab !== 'dashboard' && (
+            <div className={styles.modalBackdrop}>
+                {renderModalContent()}
+            </div>
+        )}
+        {itemToDelete && (
+          <ConfirmationDialog
+            title="Confirmar Exclusão"
+            message={`Tem certeza que deseja excluir "${itemToDelete.full_name || itemToDelete.name}"? Esta ação não pode ser desfeita.`}
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setItemToDelete(null)}
+            confirmText="Excluir"
+          />
+        )}
       </AnimatePresence>
     </div>
   );
 };
 
-export default BemVindoPage;
+export default BemVindoPageWrapper;

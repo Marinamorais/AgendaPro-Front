@@ -367,3 +367,401 @@
   padding: 3rem;
   color: #888;
 }
+/* Adicione estas classes ao final de BemVindo.module.css */
+
+.dialogContent {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.dialogTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.dialogMessage {
+  font-size: 1rem;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.dialogActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.dialogButton {
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.cancelButton:hover {
+  background-color: #e2e8f0;
+}
+
+.confirmButton {
+  background-color: #dc2626; /* Vermelho para ações destrutivas */
+  color: white;
+}
+
+.confirmButton:hover {
+  background-color: #b91c1c;
+}
+
+/* app/Bemvindo/[id]/BemVindo.module.css */
+
+/* --- Layout Principal com Sidebar --- */
+.pageWrapper {
+  display: flex;
+  height: 100vh;
+  background-color: #f8fafc; /* Um cinza muito claro */
+}
+
+.sidebar {
+  width: 240px;
+  background-color: #111827; /* Azul escuro/preto */
+  color: #d1d5db;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem 1.5rem;
+  border-bottom: 1px solid #374151;
+  margin-bottom: 1rem;
+}
+.brand img {
+  width: 32px;
+  height: 32px;
+}
+.brand span {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.sidebarNav button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #d1d5db;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.sidebarNav button:hover {
+  background-color: #374151;
+  color: #fff;
+}
+.sidebarNav button.active {
+  background-color: #00C49F;
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebarFooter {
+  margin-top: auto;
+}
+
+.mainContent {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.mainHeader {
+  padding: 2rem 2.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #fff;
+}
+.mainHeader h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #111827;
+}
+.mainHeader p {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.contentArea {
+  padding: 2.5rem;
+  flex-grow: 1;
+}
+
+/* --- Estilos do CRM de Clientes --- */
+.crmContainer {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  height: 100%;
+}
+
+.listPanel {
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.listHeader {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+}
+
+.searchInputFull {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  flex-grow: 1;
+}
+.searchInputFull:focus {
+  outline: none;
+  border-color: #00C49F;
+  box-shadow: 0 0 0 2px rgba(0, 196, 159, 0.2);
+}
+
+.primaryButton {
+  background-color: #00C49F;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+.primaryButton:hover {
+  background-color: #00a883;
+}
+
+/* --- Componente de Tabela --- */
+.tableWrapper {
+  overflow-x: auto;
+  flex-grow: 1;
+}
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+.dataTable th {
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+}
+.dataTable td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+.dataTable tr {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.dataTable tr:hover {
+  background-color: #f9fafb;
+}
+.dataTable tr.selectedRow {
+  background-color: #f0fdfa; /* Verde bem claro */
+  border-left: 3px solid #00C49F;
+}
+
+.actionsCell {
+  text-align: right;
+  white-space: nowrap;
+}
+.actionButtonSmall {
+  background: none;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 0.5rem;
+}
+.actionButtonSmall.danger {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+.actionButtonSmall.danger:hover {
+  background-color: #fee2e2;
+}
+.actionButtonSmall:hover {
+  background-color: #f3f4f6;
+}
+
+
+/* --- Painel de Detalhes --- */
+.detailPanel {
+  background-color: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+.detailPanel.placeholder {
+  display: grid;
+  place-content: center;
+  color: #9ca3af;
+}
+.panelHeader {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panelHeader h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #111827;
+}
+.closePanelButton {
+  background: none; border: none; font-size: 1.5rem; color: #9ca3af; cursor: pointer;
+}
+.panelBody {
+  padding: 1.5rem;
+  flex-grow: 1;
+}
+.panelBody h4 { font-size: 1.25rem; margin: 0 0 1rem; }
+.panelBody p { margin: 0.5rem 0; color: #4b5563; }
+.kpiGridSmall {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+.kpiCardSmall {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 6px;
+}
+.kpiCardSmall span { display: block; color: #6b7280; font-size: 0.875rem; }
+.kpiCardSmall strong { display: block; font-size: 1.25rem; color: #111827; }
+
+.panelFooter {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+.actionButton {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.actionButton:not(.danger) {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+.actionButton.danger {
+  background-color: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+}
+
+
+/* --- Estados de Carregamento e Vazio --- */
+.loadingState, .emptyState {
+  text-align: center;
+  padding: 4rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* --- Modais --- */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+
+/* Reutilize .dialogContent e outros estilos para os modais de formulário também */
+
+
+/* --- Sistema de Notificações (Toasts) --- */
+.toastContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+  min-width: 300px;
+}
+.toast.success { background-color: #059669; }
+.toast.error { background-color: #dc2626; }
+.toast.info { background-color: #2563eb; }
+.toastCloseButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  opacity: 0.7;
+  cursor: pointer;
+}
