@@ -1,127 +1,124 @@
 "use client";
-import React from 'react'; // Adicionado import completo do React
-import { startOfWeek, endOfWeek, addWeeks, subWeeks, format } from 'date-fns';
-import styles from './Agenda.module.css';
-import AgendaHeader from './components/AgendaHeader';
-import TimeGrid from './components/TimeGrid';
-import AppointmentDetailModal from './components/AppointmentDetailModal';
-import { fetchData } from '../../../../service/api';
+import React, { useState, useMemo } from "react";
+import { useParams } from "next/navigation";
+import { DragDropContext } from 'react-beautiful-dnd';
+import styles from "./Agenda.module.css";
 
-const initialState = {
-    professional: null,
-    appointments: [],
-    absences: [],
-    loading: true,
-    error: null,
-};
+// Hooks e Componentes
+import { useAgenda } from "./hooks/useAgenda";
+import AgendaHeader from "./components/AgendaHeader";
+import TimeGrid from "./components/TimeGrid";
+import AppointmentDetailModal from "./components/AppointmentDetailModal";
+import NewAppointmentModal from "./components/NewAppointmentModal";
+import { useToast } from "../contexts/ToastProvider"; // Usando o Toast que criamos antes
 
-function agendaReducer(state, action) {
-    switch (action.type) {
-        case 'FETCH_START':
-            return { ...state, loading: true, error: null };
-        case 'FETCH_SUCCESS':
-            return {
-                ...state,
-                loading: false,
-                professional: action.payload.professional ?? state.professional,
-                appointments: action.payload.appointments ?? state.appointments,
-                absences: action.payload.absences ?? state.absences,
-            };
-        case 'FETCH_ERROR':
-            return { ...state, loading: false, error: action.payload };
-        default:
-            throw new Error(`Ação desconhecida: ${action.type}`);
+const LoadingComponent = () => <div className={styles.loadingOverlay}>Carregando Agenda...</div>;
+const ErrorComponent = ({ error }) => <div className={styles.errorOverlay}>{error}</div>;
+
+export default function Agenda() {
+  const params = useParams();
+  const { id: establishmentId, idProfissional: professionalId } = params;
+  const { showToast } = useToast();
+
+  const {
+    currentDate,
+    appointments,
+    loading,
+    error,
+    changeDate,
+    updateAppointmentStatus,
+    moveAppointment,
+    createAppointment
+  } = useAgenda(establishmentId, professionalId);
+
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [newAppointmentSlot, setNewAppointmentSlot] = useState(null); // { date, time }
+
+  const handleUpdateStatus = async (newStatus) => {
+    const success = await updateAppointmentStatus(selectedAppointment.id, newStatus);
+    if (success) {
+      showToast(`Agendamento ${newStatus.toLowerCase()}!`, "success");
+      setSelectedAppointment(null);
+    } else {
+      showToast("Erro ao atualizar status.", "error");
     }
-}
+  };
+  
+  const handleCreateAppointment = async (data) => {
+      const success = await createAppointment({ ...data, professional_id: professionalId, establishment_id: establishmentId });
+      if (success) {
+          showToast("Agendamento criado com sucesso!", "success");
+          setNewAppointmentSlot(null);
+      } else {
+          showToast("Erro ao criar agendamento.", "error");
+      }
+  };
 
-const ProfessionalAgendaPage = ({ params }) => {
-    // CORREÇÃO APLICADA AQUI:
-    const { idProfissional } = React.use(params);
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
 
-    const [state, dispatch] = React.useReducer(agendaReducer, initialState);
-    const { professional, appointments, absences, loading, error } = state;
-    
-    const [currentDate, setCurrentDate] = React.useState(new Date());
-    const [selectedAppointment, setSelectedAppointment] = React.useState(null);
+    if (!destination) return;
 
-    const weekStart = React.useMemo(() => startOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
-    const weekEnd = React.useMemo(() => endOfWeek(currentDate, { weekStartsOn: 1 }), [currentDate]);
+    // TODO: Implementar a lógica de conversão do droppableId para data/hora
+    const newDate = currentDate; // Placeholder
+    const newTime = destination.droppableId; // Placeholder
 
-    // Efeito para buscar dados estáticos do profissional apenas uma vez
-    React.useEffect(() => {
-        const fetchProfessionalData = async () => {
-            try {
-                const profData = await fetchData(`professionals/${idProfissional}`);
-                dispatch({ type: 'FETCH_SUCCESS', payload: { professional: profData } });
-            } catch (err) {
-                dispatch({ type: 'FETCH_ERROR', payload: "Não foi possível carregar os dados do profissional." });
-            }
-        };
+    const success = moveAppointment(draggableId, newDate, newTime);
+    if (success) {
+      showToast("Agendamento reagendado com sucesso!", "success");
+    } else {
+      showToast("Não foi possível reagendar neste horário.", "error");
+    }
+  };
 
-        if (idProfissional) {
-            fetchProfessionalData();
-        }
-    }, [idProfissional]);
+  const weekDates = useMemo(() => {
+    const startOfWeek = new Date(currentDate);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    return Array.from({ length: 7 }).map((_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
+  }, [currentDate]);
 
-    // Efeito para buscar os dados dinâmicos da semana (agendamentos, ausências)
-    const fetchWeekData = React.useCallback(async () => {
-        dispatch({ type: 'FETCH_START' });
-        try {
-            const startDateISO = format(weekStart, 'yyyy-MM-dd');
-            const endDateISO = format(weekEnd, 'yyyy-MM-dd');
+  return (
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className={styles.agendaContainer}>
+        <AgendaHeader currentDate={currentDate} onDateChange={changeDate} professionalName="Profissional" />
+        
+        {loading && <LoadingComponent />}
+        {error && <ErrorComponent error={error} />}
 
-            const [appData, absenceData] = await Promise.all([
-                fetchData('appointments', { professional_id: idProfissional, startDate: startDateISO, endDate: endDateISO }),
-                fetchData('absences', { professional_id: idProfissional, startDate: startDateISO, endDate: endDateISO })
-            ]);
-            
-            dispatch({ type: 'FETCH_SUCCESS', payload: { appointments: appData, absences: absenceData } });
-        } catch (err) {
-            dispatch({ type: 'FETCH_ERROR', payload: "Não foi possível carregar os agendamentos." });
-        }
-    }, [idProfissional, weekStart, weekEnd]);
-    
-    React.useEffect(() => {
-        if (idProfissional) {
-            fetchWeekData();
-        }
-    }, [idProfissional, fetchWeekData]);
-
-    const goToNextWeek = () => setCurrentDate(current => addWeeks(current, 1));
-    const goToPreviousWeek = () => setCurrentDate(current => subWeeks(current, 1));
-    const goToToday = () => setCurrentDate(new Date());
-
-    return (
-        <div className={styles.agendaContainer}>
-            <AgendaHeader
-                professionalName={professional?.full_name}
-                weekStart={weekStart}
-                onNextWeek={goToNextWeek}
-                onPreviousWeek={goToPreviousWeek}
-                onToday={goToToday}
+        <main className={styles.mainContent}>
+          {!loading && !error && (
+            <TimeGrid
+              weekDates={weekDates}
+              appointments={appointments}
+              onBlockClick={setSelectedAppointment}
+              onEmptySlotClick={(date, time) => setNewAppointmentSlot({ date, time })}
             />
-            {loading && <div className={styles.loading}>Carregando agenda...</div>}
-            
-            {error && !loading && <div className={styles.error}>{error}</div>}
-            
-            {!loading && !error && (
-                <TimeGrid
-                    weekStart={weekStart}
-                    appointments={appointments}
-                    absences={absences}
-                    onAppointmentClick={setSelectedAppointment}
-                />
-            )}
-            
-            {selectedAppointment && (
-                <AppointmentDetailModal
-                    appointment={selectedAppointment}
-                    onClose={() => setSelectedAppointment(null)}
-                    onStatusChange={fetchWeekData}
-                />
-            )}
-        </div>
-    );
-};
+          )}
+        </main>
 
-export default ProfessionalAgendaPage;
+        {selectedAppointment && (
+          <AppointmentDetailModal
+            appointment={selectedAppointment}
+            onClose={() => setSelectedAppointment(null)}
+            onUpdateStatus={handleUpdateStatus}
+            onReschedule={() => showToast("Use o Arrastar e Soltar para reagendar!", "info")}
+          />
+        )}
+
+        {newAppointmentSlot && (
+            <NewAppointmentModal
+                slot={newAppointmentSlot}
+                onClose={() => setNewAppointmentSlot(null)}
+                onSave={handleCreateAppointment}
+            />
+        )}
+      </div>
+    </DragDropContext>
+  );
+}

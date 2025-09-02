@@ -943,3 +943,75 @@
 /* --- ESTILOS ADICIONAIS --- */
 .historyTable { width: 100%; margin-top: 1rem; }
 .actionButton.info { background-color: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
+
+/* Adicionar ao final do arquivo Agenda.module.css */
+
+/* --- Estilos de Status para AppointmentBlock --- */
+.appointmentBlock {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  border-left: 4px solid transparent;
+}
+
+.appointmentBlock:hover {
+  transform: scale(1.02);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Agendado (Azul) */
+.agendado {
+  background-color: rgba(74, 144, 226, 0.9);
+  border-left-color: #1a73e8;
+}
+
+/* Confirmado (Verde) */
+.confirmado {
+  background-color: rgba(80, 227, 194, 0.9);
+  border-left-color: #1e8e3e;
+}
+
+/* Finalizado (Roxo/Cinza) */
+.finalizado {
+  background-color: rgba(155, 89, 182, 0.9);
+  border-left-color: #8e44ad;
+}
+
+/* Cancelado (Vermelho) */
+.cancelado {
+  background-color: rgba(235, 87, 87, 0.8);
+  border-left-color: #d93025;
+  text-decoration: line-through;
+}
+
+.appointmentContent {
+  padding: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.appointmentHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.statusIcon {
+  font-size: 1em;
+}
+
+.appointmentTime {
+  font-size: 0.9em;
+}
+
+.serviceName {
+  font-weight: 600;
+  margin: 4px 0;
+  font-size: 0.85em;
+}
+
+.clientName {
+  font-size: 0.8em;
+  opacity: 0.9;
+}

@@ -1,73 +1,89 @@
-// app/Bemvindo/[id]/[idProfissional]/components/TimeGrid.jsx
-import React, { useState, useEffect } from 'react';
-import { format, addDays, getDay, parseISO, differenceInMinutes } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+"use client";
+import React, { useEffect, useState, useRef } from 'react';
+import { Droppable, Draggable } from 'react-beautiful-dnd';
 import styles from '../Agenda.module.css';
 import AppointmentBlock from './AppointmentBlock';
 
-const TimeGrid = ({ weekStart, appointments, absences, onAppointmentClick }) => {
-    const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-    const timeSlots = Array.from({ length: (22 - 7) * 2 }, (_, i) => {
-        const hour = 7 + Math.floor(i / 2);
-        const minute = (i % 2) * 30;
-        return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-    });
+const TimeIndicator = () => {
+  const [top, setTop] = useState(0);
+  const indicatorRef = useRef(null);
 
-    const [currentTime, setCurrentTime] = useState(new Date());
-
-    useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Atualiza a cada minuto
-        return () => clearInterval(timer);
-    }, []);
-
-    const timeIndicatorPosition = () => {
-        const now = currentTime;
-        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 7, 0, 0);
-        const minutesPast = differenceInMinutes(now, startOfDay);
-        return (minutesPast / ((22 - 7) * 60)) * 100;
+  useEffect(() => {
+    const updatePosition = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      // Converte hora atual em minutos desde o início do dia (7h)
+      const totalMinutes = hours * 60 + minutes;
+      const minutesFromStart = totalMinutes - (7 * 60); // 7h = 420 min
+      // Calcula a posição. Cada minuto corresponde a 1px de altura
+      const newTop = minutesFromStart;
+      if (indicatorRef.current) {
+        indicatorRef.current.style.top = `${newTop}px`;
+      }
     };
     
-    return (
-        <div className={styles.timeGridContainer}>
-            <div className={styles.timeGrid}>
-                <div className={styles.corner}></div>
-                {days.map(day => (
-                    <div key={day.toString()} className={styles.dayHeader}>
-                        <span>{format(day, 'EEE', { locale: ptBR })}</span>
-                        <strong>{format(day, 'd')}</strong>
-                    </div>
-                ))}
-                
-                {timeSlots.map(time => (
-                    <React.Fragment key={time}>
-                        <div className={styles.timeSlotLabel}>{time}</div>
-                        {days.map(day => <div key={`${day.toString()}-${time}`} className={styles.timeSlot}></div>)}
-                    </React.Fragment>
-                ))}
-                
-                {/* Posiciona os Agendamentos */}
-                {appointments.map(app => {
-                    const appStart = parseISO(app.start_time);
-                    const dayIndex = getDay(appStart) === 0 ? 6 : getDay(appStart) - 1; // Ajusta para semana começando na segunda
-                    
-                    return (
-                        <AppointmentBlock
-                            key={app.id}
-                            appointment={app}
-                            dayIndex={dayIndex}
-                            onClick={() => onAppointmentClick(app)}
-                        />
-                    );
-                })}
-                
-                {/* Indicador de Hora Atual */}
-                <div 
-                    className={styles.timeIndicator} 
-                    style={{ top: `${timeIndicatorPosition()}%` }}
-                />
-            </div>
-        </div>
-    );
+    updatePosition();
+    const interval = setInterval(updatePosition, 60000); // Atualiza a cada minuto
+    return () => clearInterval(interval);
+  }, []);
+
+  return <div ref={indicatorRef} className={styles.timeIndicator}></div>;
 };
 
-export default TimeGrid;
+export default function TimeGrid({ weekDates, appointments, onBlockClick, onEmptySlotClick }) {
+  const hours = Array.from({ length: 15 }, (_, i) => i + 7); // 7h às 21h
+
+  const handleColumnClick = (e, date) => {
+      if (e.target.classList.contains(styles.dayColumn)) {
+          const rect = e.target.getBoundingClientRect();
+          const clickY = e.clientY - rect.top;
+          
+          const hour = Math.floor(clickY / 60) + 7;
+          const minute = Math.floor(((clickY % 60) / 60) * 2) * 30; // Arredonda para 00 ou 30
+          
+          const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+          onEmptySlotClick(date, time);
+      }
+  };
+
+  return (
+    <div className={styles.timeGrid}>
+      <div className={styles.hoursColumn}>
+        {hours.map(hour => (
+          <div key={hour} className={styles.hourLabel}>{`${hour}:00`}</div>
+        ))}
+      </div>
+      <div className={styles.gridContent}>
+        {weekDates.map(date => {
+          const dateString = date.toISOString().split('T')[0];
+          return (
+            <Droppable droppableId={dateString} key={dateString}>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`${styles.dayColumn} ${snapshot.isDraggingOver ? styles.draggingOver : ''}`}
+                  onClick={(e) => handleColumnClick(e, date)}
+                >
+                  <TimeIndicator />
+                  {appointments
+                    .filter(app => app.date === dateString)
+                    .map((app, index) => (
+                      <AppointmentBlock
+                        key={app.id}
+                        appointment={app}
+                        index={index}
+                        onBlockClick={onBlockClick}
+                      />
+                    ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

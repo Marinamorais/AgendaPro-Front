@@ -319,3 +319,202 @@
     padding: 0.3rem;
   }
 }
+
+/* Adicionar ao final do arquivo Agenda.module.css */
+
+/* --- Estilos do Modal de Detalhes --- */
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.confirmButton, .finishButton, .rescheduleButton, .cancelButton {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.3s;
+}
+
+.confirmButton { background-color: #28a745; }
+.finishButton { background-color: #6f42c1; }
+.rescheduleButton { background-color: #fd7e14; }
+.cancelButton { background-color: #dc3545; }
+
+.confirmButton:hover, .finishButton:hover, .rescheduleButton:hover, .cancelButton:hover {
+  opacity: 0.85;
+}
+
+.statusLabel {
+  font-style: italic;
+  color: #6c757d;
+}
+
+.detailList { display: flex; flex-direction: column; gap: 12px; }
+.detailItem { display: flex; align-items: center; gap: 10px; }
+
+.statusBadge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+.statusBadge.agendado { background-color: #1a73e8; }
+.statusBadge.confirmado { background-color: #1e8e3e; }
+.statusBadge.finalizado { background-color: #8e44ad; }
+.statusBadge.cancelado { background-color: #d93025; }
+
+
+
+.appointmentBlock {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  border-left: 4px solid transparent;
+}
+
+.appointmentBlock:hover {
+  transform: scale(1.02);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Agendado (Azul) */
+.agendado {
+  background-color: rgba(74, 144, 226, 0.9);
+  border-left-color: #1a73e8;
+}
+
+/* Confirmado (Verde) */
+.confirmado {
+  background-color: rgba(80, 227, 194, 0.9);
+  border-left-color: #1e8e3e;
+}
+
+/* Finalizado (Roxo/Cinza) */
+.finalizado {
+  background-color: rgba(155, 89, 182, 0.9);
+  border-left-color: #8e44ad;
+}
+
+/* Cancelado (Vermelho) */
+.cancelado {
+  background-color: rgba(235, 87, 87, 0.8);
+  border-left-color: #d93025;
+  text-decoration: line-through;
+}
+
+.appointmentContent {
+  padding: 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.appointmentHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.statusIcon {
+  font-size: 1em;
+}
+
+.appointmentTime {
+  font-size: 0.9em;
+}
+
+.serviceName {
+  font-weight: 600;
+  margin: 4px 0;
+  font-size: 0.85em;
+}
+
+.clientName {
+  font-size: 0.8em;
+  opacity: 0.9;
+}
+
+/* ... (estilos existentes) ... */
+
+/* --- Estilos Drag & Drop --- */
+.draggingOver {
+  background-color: #e8f0fe; /* Azul claro para indicar área de drop */
+}
+
+.isDragging {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+  transform: rotate(2deg);
+}
+
+/* --- Indicador de Hora Atual --- */
+.timeIndicator {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background-color: #ea4335; /* Vermelho Google */
+  z-index: 20;
+  left: 0;
+  pointer-events: none;
+}
+.timeIndicator::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: #ea4335;
+  border-radius: 50%;
+}
+
+
+/* --- Estados de Loading e Erro --- */
+.loadingOverlay, .errorOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 500;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.8);
+}
+.errorOverlay {
+    color: #dc3545;
+}
+
+/* --- Estilos para o novo modal --- */
+.formGroup {
+    margin-bottom: 15px;
+}
+.formGroup label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+.formGroup input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+.saveButton {
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #1a73e8;
+}

@@ -1,31 +1,57 @@
 // app/Bemvindo/[id]/[idProfissional]/components/AppointmentDetailModal.jsx
 import React from 'react';
 import styles from '../Agenda.module.css';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { FaUser, FaPhone, FaTools, FaCalendarAlt, FaClock } from 'react-icons/fa';
 
-const AppointmentDetailModal = ({ appointment, onClose, onStatusChange }) => {
-    // ... aqui você adicionaria a lógica para mudar o status
-    
-    return (
-        <div className={styles.modalOverlay} onClick={onClose}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-                <button onClick={onClose} className={styles.closeButton}>×</button>
-                <h2>Detalhes do Agendamento</h2>
-                <p><strong>Cliente:</strong> {appointment.client?.full_name}</p>
-                <p><strong>Serviço:</strong> {appointment.service?.name}</p>
-                <p><strong>Data:</strong> {format(parseISO(appointment.start_time), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-                <p><strong>Status:</strong> <span className={`${styles.statusBadge} ${styles[appointment.status.toLowerCase()]}`}>{appointment.status}</span></p>
-                <p><strong>Recurso:</strong> {appointment.asset?.name || "Nenhum"}</p>
-                <p><strong>Preço:</strong> R$ {appointment.service?.price}</p>
-                <div className={styles.modalActions}>
-                    {/* Botões para mudar status iriam aqui */}
-                    <button>Confirmar</button>
-                    <button>Marcar como Concluído</button>
-                </div>
-            </div>
+export default function AppointmentDetailModal({ appointment, onClose, onUpdateStatus, onReschedule }) {
+  if (!appointment) return null;
+
+  const { client_name, client_phone, service_name, date, start_time, status } = appointment;
+
+  const renderActions = () => {
+    switch (status) {
+      case 'Agendado':
+        return (
+          <>
+            <button onClick={() => onUpdateStatus('Confirmado')} className={styles.confirmButton}>Confirmar</button>
+            <button onClick={onReschedule} className={styles.rescheduleButton}>Reagendar</button>
+            <button onClick={() => onUpdateStatus('Cancelado')} className={styles.cancelButton}>Cancelar</button>
+          </>
+        );
+      case 'Confirmado':
+        return (
+          <>
+            <button onClick={() => onUpdateStatus('Finalizado')} className={styles.finishButton}>Finalizar</button>
+            <button onClick={onReschedule} className={styles.rescheduleButton}>Reagendar</button>
+            <button onClick={() => onUpdateStatus('Cancelado')} className={styles.cancelButton}>Cancelar</button>
+          </>
+        );
+      case 'Finalizado':
+        return <p className={styles.statusLabel}>Este agendamento foi finalizado.</p>;
+      case 'Cancelado':
+        return <p className={styles.statusLabel}>Este agendamento foi cancelado.</p>;
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <button onClick={onClose} className={styles.closeButton}>×</button>
+        <h2>Detalhes do Agendamento</h2>
+        <div className={styles.detailList}>
+          <div className={styles.detailItem}><FaUser /> <strong>Cliente:</strong> {client_name}</div>
+          <div className={styles.detailItem}><FaPhone /> <strong>Telefone:</strong> {client_phone || 'Não informado'}</div>
+          <div className={styles.detailItem}><FaTools /> <strong>Serviço:</strong> {service_name}</div>
+          <div className={styles.detailItem}><FaCalendarAlt /> <strong>Data:</strong> {new Date(date).toLocaleDateString()}</div>
+          <div className={styles.detailItem}><FaClock /> <strong>Hora:</strong> {start_time}</div>
+          <div className={styles.detailItem}><strong>Status:</strong> <span className={`${styles.statusBadge} ${styles[status?.toLowerCase()]}`}>{status}</span></div>
         </div>
-    );
-};
-
-export default AppointmentDetailModal;
+        <div className={styles.modalActions}>
+          {renderActions()}
+        </div>
+      </div>
+    </div>
+  );
+}
