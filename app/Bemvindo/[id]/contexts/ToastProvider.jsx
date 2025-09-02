@@ -1,10 +1,13 @@
 "use client";
 import React, { createContext, useState, useCallback, useContext } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+// AQUI ESTÁ A CORREÇÃO: Importando do arquivo CSS que já existe.
 import styles from '../BemVindo.module.css';
 
-const ToastContext = createContext(null);
+// O Contexto agora é exportado corretamente
+export const ToastContext = createContext(null);
 
+// Hook para facilitar o uso
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
@@ -22,7 +25,7 @@ export const ToastProvider = ({ children }) => {
     const id = toastId++;
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
     setTimeout(() => {
-      setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
+      removeToast(id);
     }, 4000); // O toast some após 4 segundos
   }, []);
 

@@ -1015,3 +1015,60 @@
   font-size: 0.8em;
   opacity: 0.9;
 }
+
+/* app/Bemvindo/[id]/contexts/Toast.module.css */
+
+.toastContainer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+}
+
+.toast {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: white;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.toast p {
+  margin: 0;
+  padding: 0;
+}
+
+/* Estilos para cada tipo de toast */
+.toast.success { 
+  background-color: #059669; /* Verde */
+}
+.toast.error { 
+  background-color: #dc2626; /* Vermelho */
+}
+.toast.info { 
+  background-color: #2563eb; /* Azul */
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  opacity: 1;
+}

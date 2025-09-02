@@ -7,34 +7,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 // --- Imports de Componentes e Hooks ---
 import styles from './BemVindo.module.css';
 import { api } from '../../../service/api';
-import { useToast, ToastProvider } from './contexts/ToastProvider';
+import { ToastProvider, useToast } from './contexts/ToastProvider';
+
+// --- Componentes das Abas ---
 import DashboardComponent from './components/DashboardComponent';
 import Clientes from './components/Clientes';
-import Profissionais from './components/Profissionais'; // NOVO
-import Produtos from './components/Produtos';       // NOVO
+import Profissionais from './components/Profissionais';
+import Produtos from './components/Produtos';
+
+// --- Componentes de Modais ---
 import ConfirmationDialog from './components/ConfirmationDialog';
 import ProfessionalFormModal from './components/ProfessionalFormModal';
 import ClientFormModal from './components/ClientFormModal';
 import ProductFormModal from './components/ProductFormModal';
 
-// --- ATUALIZAÇÃO DA CONFIGURAÇÃO DAS ABAS ---
 const TABS_CONFIG = {
-  dashboard: { label: 'Dashboard', component: DashboardComponent, endpoint: null },
+  dashboard: { label: 'Dashboard', component: DashboardComponent },
   clientes: { label: 'Clientes', component: Clientes, endpoint: 'clients' },
-  profissionais: { label: 'Profissionais', component: Profissionais, endpoint: 'professionals' }, // ATUALIZADO
-  produtos: { label: 'Produtos', component: Produtos, endpoint: 'products' }, // ATUALIZADO
+  profissionais: { label: 'Profissionais', component: Profissionais, endpoint: 'professionals' },
+  produtos: { label: 'Produtos', component: Produtos, endpoint: 'products' },
 };
 
-// --- Componente Wrapper com Provider ---
-const BemVindoPageWrapper = () => (
-    <ToastProvider>
-        <BemVindoPage />
-    </ToastProvider>
-);
-
-
 // --- Componente Principal da Página ---
-const BemVindoPage = () => {
+const BemVindoPageContent = () => {
   const router = useRouter();
   const params = useParams();
   const { id: establishmentId } = params;
@@ -43,9 +38,12 @@ const BemVindoPage = () => {
   const [establishment, setEstablishment] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-  const [itemToDelete, setItemToDelete] = useState(null);
+  // Estado para forçar re-renderização dos filhos após uma ação
+  const [reRenderKey, setReRenderKey] = useState(0);
+
+  // --- Gerenciamento de Modais ---
+  const [modalState, setModalState] = useState({ isOpen: false, item: null });
+  const [dialogState, setDialogState] = useState({ isOpen: false, item: null });
   
   useEffect(() => {
     const storedData = localStorage.getItem('establishment');
@@ -58,47 +56,48 @@ const BemVindoPage = () => {
     }
   }, [router, addToast]);
 
-  const openModal = useCallback((item = null) => {
-    setEditingItem(item);
-    setIsModalOpen(true);
-  }, []);
+  // --- Funções para controle dos Modais e Diálogos ---
+  const openModal = useCallback((item = null) => setModalState({ isOpen: true, item }), []);
+  const closeModal = useCallback(() => setModalState({ isOpen: false, item: null }), []);
+  const openDeleteDialog = useCallback((item) => setDialogState({ isOpen: true, item }), []);
+  const closeDeleteDialog = useCallback(() => setDialogState({ isOpen: false, item: null }), []);
 
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setEditingItem(null);
-  }, []);
+  const forceReRender = () => setReRenderKey(prev => prev + 1);
 
-  const openDeleteDialog = useCallback((item) => {
-    setItemToDelete(item);
-  }, []);
-
+  // --- Ações de CRUD ---
   const handleSuccess = useCallback(() => {
+    const action = modalState.item ? 'atualizado' : 'criado';
+    addToast(`Item ${action} com sucesso!`, 'success');
     closeModal();
-    addToast(editingItem ? 'Item atualizado com sucesso!' : 'Item criado com sucesso!', 'success');
-  }, [closeModal, addToast, editingItem]);
+    forceReRender(); // Força a atualização da lista
+  }, [addToast, closeModal, modalState.item]);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!itemToDelete) return;
+    if (!dialogState.item) return;
     const endpoint = TABS_CONFIG[activeTab].endpoint;
+    if (!endpoint) return;
 
     try {
-      await api.delete(endpoint, itemToDelete.id);
-      addToast(`"${itemToDelete.full_name || itemToDelete.name}" foi deletado.`, 'success');
-      setItemToDelete(null);
+      await api.delete(endpoint, dialogState.item.id);
+      addToast(`"${dialogState.item.full_name || dialogState.item.name}" foi deletado.`, 'success');
+      closeDeleteDialog();
+      forceReRender(); // Força a atualização da lista
     } catch (error) {
       addToast(`Erro ao deletar: ${error.message}`, 'error');
-      setItemToDelete(null);
+      closeDeleteDialog();
     }
-  }, [itemToDelete, activeTab, addToast]);
+  }, [dialogState.item, activeTab, addToast, closeDeleteDialog]);
 
+  // Renderiza o Componente da Aba Ativa
   const ActiveComponent = TABS_CONFIG[activeTab].component;
 
+  // Renderiza o Modal de Formulário correto para a Aba Ativa
   const renderModalContent = () => {
     const commonProps = {
       establishmentId,
       onSuccess: handleSuccess,
       closeModal,
-      initialData: editingItem,
+      initialData: modalState.item,
     };
     switch (activeTab) {
       case 'profissionais': return <ProfessionalFormModal {...commonProps} />;
@@ -126,6 +125,7 @@ const BemVindoPage = () => {
             </button>
           ))}
         </nav>
+        {/* Adicione um footer ou botão de logout se desejar */}
       </aside>
       
       <main className={styles.mainContent}>
@@ -137,7 +137,7 @@ const BemVindoPage = () => {
         <div className={styles.contentArea}>
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={activeTab}
+                    key={activeTab} // A animação acontece na troca de aba
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
@@ -149,7 +149,7 @@ const BemVindoPage = () => {
                             onAdd={() => openModal()}
                             onEdit={openModal}
                             onDelete={openDeleteDialog}
-                            key={`${activeTab}-${!itemToDelete}`}
+                            keyForReRender={reRenderKey} // Passa a chave para o filho
                         />
                     )}
                 </motion.div>
@@ -157,18 +157,19 @@ const BemVindoPage = () => {
         </div>
       </main>
 
+      {/* Renderização de Modais e Diálogos */}
       <AnimatePresence>
-        {isModalOpen && activeTab !== 'dashboard' && (
-            <div className={styles.modalBackdrop}>
+        {modalState.isOpen && activeTab !== 'dashboard' && (
+            <div className={styles.modalBackdrop} onClick={closeModal}>
                 {renderModalContent()}
             </div>
         )}
-        {itemToDelete && (
+        {dialogState.isOpen && (
           <ConfirmationDialog
             title="Confirmar Exclusão"
-            message={`Tem certeza que deseja excluir "${itemToDelete.full_name || itemToDelete.name}"? Esta ação não pode ser desfeita.`}
+            message={`Tem certeza que deseja excluir "${dialogState.item.full_name || dialogState.item.name}"? Esta ação não pode ser desfeita.`}
             onConfirm={handleConfirmDelete}
-            onCancel={() => setItemToDelete(null)}
+            onCancel={closeDeleteDialog}
             confirmText="Excluir"
           />
         )}
@@ -176,5 +177,13 @@ const BemVindoPage = () => {
     </div>
   );
 };
+
+
+// --- Componente Wrapper com o Provider de Notificações ---
+const BemVindoPageWrapper = () => (
+    <ToastProvider>
+        <BemVindoPageContent />
+    </ToastProvider>
+);
 
 export default BemVindoPageWrapper;
