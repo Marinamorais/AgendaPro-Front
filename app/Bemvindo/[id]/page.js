@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -9,24 +9,23 @@ import styles from './BemVindo.module.css';
 import { api } from '../../../service/api';
 import { useToast, ToastProvider } from './contexts/ToastProvider';
 import DashboardComponent from './components/DashboardComponent';
-import Clientes from './components/Clientes'; // O novo componente de CRM
-import List from './components/List';
+import Clientes from './components/Clientes';
+import Profissionais from './components/Profissionais'; // NOVO
+import Produtos from './components/Produtos';       // NOVO
 import ConfirmationDialog from './components/ConfirmationDialog';
 import ProfessionalFormModal from './components/ProfessionalFormModal';
 import ClientFormModal from './components/ClientFormModal';
 import ProductFormModal from './components/ProductFormModal';
 
-// --- Configuração das Abas ---
+// --- ATUALIZAÇÃO DA CONFIGURAÇÃO DAS ABAS ---
 const TABS_CONFIG = {
   dashboard: { label: 'Dashboard', component: DashboardComponent, endpoint: null },
   clientes: { label: 'Clientes', component: Clientes, endpoint: 'clients' },
-  profissionais: { label: 'Profissionais', component: List, endpoint: 'professionals' },
-  produtos: { label: 'Produtos', component: List, endpoint: 'products' },
-  // Adicione outras abas aqui no futuro
+  profissionais: { label: 'Profissionais', component: Profissionais, endpoint: 'professionals' }, // ATUALIZADO
+  produtos: { label: 'Produtos', component: Produtos, endpoint: 'products' }, // ATUALIZADO
 };
 
 // --- Componente Wrapper com Provider ---
-// Para que os componentes filhos possam usar o `useToast`
 const BemVindoPageWrapper = () => (
     <ToastProvider>
         <BemVindoPage />
@@ -44,25 +43,21 @@ const BemVindoPage = () => {
   const [establishment, setEstablishment] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Estado para modais e diálogos
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
   
-  // Efeito para carregar dados do estabelecimento do localStorage
   useEffect(() => {
     const storedData = localStorage.getItem('establishment');
     if (storedData) {
       setEstablishment(JSON.parse(storedData));
     } else {
-      // Em um app real, redirecionaria para o login se não houver dados
       console.error("Dados do estabelecimento não encontrados.");
       addToast("Erro: Faça login novamente.", 'error');
       router.push('/');
     }
   }, [router, addToast]);
 
-  // --- Handlers para Modais e Ações ---
   const openModal = useCallback((item = null) => {
     setEditingItem(item);
     setIsModalOpen(true);
@@ -77,13 +72,9 @@ const BemVindoPage = () => {
     setItemToDelete(item);
   }, []);
 
-  // --- Lógica de Sucesso e Deleção ---
-  // O estado dos dados agora é gerenciado dentro de cada componente de aba
-  // para mantê-los independentes. Esta função serve para notificar.
   const handleSuccess = useCallback(() => {
     closeModal();
     addToast(editingItem ? 'Item atualizado com sucesso!' : 'Item criado com sucesso!', 'success');
-    // A atualização dos dados será feita pelo componente da aba ativa.
   }, [closeModal, addToast, editingItem]);
 
   const handleConfirmDelete = useCallback(async () => {
@@ -93,15 +84,13 @@ const BemVindoPage = () => {
     try {
       await api.delete(endpoint, itemToDelete.id);
       addToast(`"${itemToDelete.full_name || itemToDelete.name}" foi deletado.`, 'success');
-      // A atualização dos dados também será feita pelo componente da aba
+      setItemToDelete(null);
     } catch (error) {
       addToast(`Erro ao deletar: ${error.message}`, 'error');
-    } finally {
       setItemToDelete(null);
     }
   }, [itemToDelete, activeTab, addToast]);
 
-  // --- Renderização ---
   const ActiveComponent = TABS_CONFIG[activeTab].component;
 
   const renderModalContent = () => {
@@ -137,9 +126,6 @@ const BemVindoPage = () => {
             </button>
           ))}
         </nav>
-        <div className={styles.sidebarFooter}>
-            {/* Espaço para configurações, etc. */}
-        </div>
       </aside>
       
       <main className={styles.mainContent}>
@@ -163,9 +149,7 @@ const BemVindoPage = () => {
                             onAdd={() => openModal()}
                             onEdit={openModal}
                             onDelete={openDeleteDialog}
-                            // A prop `key` força a remontagem do componente ao deletar,
-                            // o que aciona a busca de dados atualizada.
-                            key={`${activeTab}-${itemToDelete}`} 
+                            key={`${activeTab}-${!itemToDelete}`}
                         />
                     )}
                 </motion.div>
@@ -173,7 +157,6 @@ const BemVindoPage = () => {
         </div>
       </main>
 
-      {/* --- Modais e Diálogos --- */}
       <AnimatePresence>
         {isModalOpen && activeTab !== 'dashboard' && (
             <div className={styles.modalBackdrop}>

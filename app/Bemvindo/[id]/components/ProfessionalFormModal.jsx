@@ -2,14 +2,14 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import styles from '../BemVindo.module.css';
-import { createData, updateData } from '../../../../service/api';
-
-// 1. Importa as ferramentas de validação
+// CORREÇÃO: Importa o objeto 'api' em vez de funções separadas
+import { api } from '../../../../service/api'; 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useToast } from '../contexts/ToastProvider';
 
-// 2. Define o "contrato" dos dados do formulário com Zod
+// Schema de validação com Zod
 const professionalSchema = z.object({
   full_name: z.string().min(3, "O nome precisa ter no mínimo 3 caracteres."),
   email: z.string().email("Por favor, insira um e-mail válido."),
@@ -18,12 +18,12 @@ const professionalSchema = z.object({
 });
 
 const ProfessionalFormModal = ({ closeModal, establishmentId, onSuccess, initialData }) => {
-  // 3. Integra o react-hook-form com o schema do Zod
+  const { addToast } = useToast();
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm({
     resolver: zodResolver(professionalSchema),
   });
 
-  // Efeito que preenche o formulário no modo de edição
+  // Preenche o formulário no modo de edição
   useEffect(() => {
     if (initialData) {
       setValue('full_name', initialData.full_name || '');
@@ -33,63 +33,59 @@ const ProfessionalFormModal = ({ closeModal, establishmentId, onSuccess, initial
     }
   }, [initialData, setValue]);
 
-  // 4. A função de submit agora recebe os dados já validados
   const onSubmit = async (formData) => {
     try {
       if (initialData) {
-        await updateData('professionals', initialData.id, formData);
+        // CORREÇÃO: Usa api.update
+        await api.update('professionals', initialData.id, formData);
       } else {
-        await createData('professionals', { ...formData, establishment_id: establishmentId });
+        // CORREÇÃO: Usa api.create
+        await api.create('professionals', { ...formData, establishment_id: establishmentId });
       }
-      onSuccess();
-      closeModal();
+      onSuccess(); // Chama a função de sucesso que atualiza a lista e fecha o modal
     } catch (err) {
-      // Erros da API ainda podem ser tratados aqui
-      alert(err.message || 'Ocorreu um erro inesperado.');
+      addToast(err.message, 'error');
     }
   };
 
   return (
-    <motion.div className={styles.overlay} onClick={closeModal} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      <motion.div 
-        className={styles.modalContent} 
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -50, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button onClick={closeModal} className={styles.closeButton}>×</button>
-        <h2>{initialData ? 'Editar Profissional' : 'Novo Profissional'}</h2>
-        
-        {/* 5. O formulário agora usa o handleSubmit do react-hook-form */}
-        <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
-          <div className={styles.inputGroup}>
-            <label htmlFor="full_name">Nome Completo</label>
-            <input id="full_name" {...register('full_name')} placeholder="Nome do profissional" />
-            {errors.full_name && <p className={styles.errorMessage}>{errors.full_name.message}</p>}
-          </div>
+    <motion.div
+      className={styles.formModalContent}
+      initial={{ y: -50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -50, opacity: 0 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button onClick={closeModal} className={styles.closeButton}>×</button>
+      <h2>{initialData ? 'Editar Profissional' : 'Novo Profissional'}</h2>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className={styles.form}>
+        <div className={styles.inputGroup}>
+          <label htmlFor="full_name">Nome Completo</label>
+          <input id="full_name" {...register('full_name')} placeholder="Nome do profissional" className={errors.full_name ? styles.inputError : ''}/>
+          {errors.full_name && <p className={styles.errorMessage}>{errors.full_name.message}</p>}
+        </div>
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="email">E-mail</label>
-            <input id="email" type="email" {...register('email')} placeholder="email@exemplo.com" />
-            {errors.email && <p className={styles.errorMessage}>{errors.email.message}</p>}
-          </div>
+        <div className={styles.inputGroup}>
+          <label htmlFor="email">E-mail</label>
+          <input id="email" type="email" {...register('email')} placeholder="email@exemplo.com" className={errors.email ? styles.inputError : ''}/>
+          {errors.email && <p className={styles.errorMessage}>{errors.email.message}</p>}
+        </div>
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="phone">Telefone (Opcional)</label>
-            <input id="phone" type="tel" {...register('phone')} placeholder="(55) 99999-9999" />
-          </div>
+        <div className={styles.inputGroup}>
+          <label htmlFor="phone">Telefone (Opcional)</label>
+          <input id="phone" type="tel" {...register('phone')} placeholder="(55) 99999-9999" />
+        </div>
 
-          <div className={styles.inputGroup}>
-            <label htmlFor="professional_role">Cargo (Opcional)</label>
-            <input id="professional_role" {...register('professional_role')} placeholder="Ex: Cabeleireiro" />
-          </div>
+        <div className={styles.inputGroup}>
+          <label htmlFor="professional_role">Cargo (Opcional)</label>
+          <input id="professional_role" {...register('professional_role')} placeholder="Ex: Cabeleireiro" />
+        </div>
 
-          <motion.button type="submit" className={styles.submitButton} disabled={isSubmitting} whileTap={{ scale: 0.98 }}>
-            {isSubmitting ? 'Salvando...' : (initialData ? 'Salvar Alterações' : 'Criar Profissional')}
-          </motion.button>
-        </form>
-      </motion.div>
+        <motion.button type="submit" className={styles.submitButton} disabled={isSubmitting} whileTap={{ scale: 0.98 }}>
+          {isSubmitting ? 'Salvando...' : (initialData ? 'Salvar Alterações' : 'Criar Profissional')}
+        </motion.button>
+      </form>
     </motion.div>
   );
 };
