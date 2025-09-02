@@ -1,21 +1,29 @@
 "use client";
 
+/**
+ * @module BemVindo/[id]/Page
+ * @description Página principal da área logada.
+ * Graças ao novo `layout.js`, este componente não precisa mais se preocupar com o ToastProvider.
+ * Ele pode chamar `useToast()` diretamente, pois o layout já garantiu a "cobertura".
+ * A estrutura do "Wrapper" foi removida daqui, simplificando drasticamente o código.
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Imports de Componentes e Hooks ---
 import styles from './BemVindo.module.css';
 import { api } from '../../../service/api';
-import { ToastProvider, useToast } from './contexts/ToastProvider';
+// Importamos apenas o hook `useToast`, pois o Provider já está no layout.
+import { useToast } from './contexts/ToastProvider';
 
-// --- Componentes das Abas ---
+// --- Imports dos componentes de cada aba ---
 import DashboardComponent from './components/DashboardComponent';
 import Clientes from './components/Clientes';
 import Profissionais from './components/Profissionais';
 import Produtos from './components/Produtos';
 
-// --- Componentes de Modais ---
+// --- Imports dos modais ---
 import ConfirmationDialog from './components/ConfirmationDialog';
 import ProfessionalFormModal from './components/ProfessionalFormModal';
 import ClientFormModal from './components/ClientFormModal';
@@ -28,20 +36,19 @@ const TABS_CONFIG = {
   produtos: { label: 'Produtos', component: Produtos, endpoint: 'products' },
 };
 
-// --- Componente Principal da Página ---
-const BemVindoPageContent = () => {
+// Este agora é o componente padrão exportado. Sem mais wrappers aqui.
+export default function BemVindoPage() {
   const router = useRouter();
   const params = useParams();
   const { id: establishmentId } = params;
+  
+  // A chamada ao hook funciona perfeitamente, garantido pelo layout.js.
   const { addToast } = useToast();
 
   const [establishment, setEstablishment] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // Estado para forçar re-renderização dos filhos após uma ação
   const [reRenderKey, setReRenderKey] = useState(0);
-
-  // --- Gerenciamento de Modais ---
   const [modalState, setModalState] = useState({ isOpen: false, item: null });
   const [dialogState, setDialogState] = useState({ isOpen: false, item: null });
   
@@ -50,13 +57,11 @@ const BemVindoPageContent = () => {
     if (storedData) {
       setEstablishment(JSON.parse(storedData));
     } else {
-      console.error("Dados do estabelecimento não encontrados.");
-      addToast("Erro: Faça login novamente.", 'error');
+      addToast("Erro de autenticação. Por favor, faça login novamente.", 'error');
       router.push('/');
     }
   }, [router, addToast]);
 
-  // --- Funções para controle dos Modais e Diálogos ---
   const openModal = useCallback((item = null) => setModalState({ isOpen: true, item }), []);
   const closeModal = useCallback(() => setModalState({ isOpen: false, item: null }), []);
   const openDeleteDialog = useCallback((item) => setDialogState({ isOpen: true, item }), []);
@@ -64,13 +69,11 @@ const BemVindoPageContent = () => {
 
   const forceReRender = () => setReRenderKey(prev => prev + 1);
 
-  // --- Ações de CRUD ---
   const handleSuccess = useCallback(() => {
-    const action = modalState.item ? 'atualizado' : 'criado';
-    addToast(`Item ${action} com sucesso!`, 'success');
+    addToast(`Operação realizada com sucesso!`, 'success');
     closeModal();
-    forceReRender(); // Força a atualização da lista
-  }, [addToast, closeModal, modalState.item]);
+    forceReRender();
+  }, [addToast, closeModal]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!dialogState.item) return;
@@ -79,19 +82,17 @@ const BemVindoPageContent = () => {
 
     try {
       await api.delete(endpoint, dialogState.item.id);
-      addToast(`"${dialogState.item.full_name || dialogState.item.name}" foi deletado.`, 'success');
+      addToast(`Item deletado com sucesso.`, 'success');
       closeDeleteDialog();
-      forceReRender(); // Força a atualização da lista
+      forceReRender();
     } catch (error) {
       addToast(`Erro ao deletar: ${error.message}`, 'error');
       closeDeleteDialog();
     }
   }, [dialogState.item, activeTab, addToast, closeDeleteDialog]);
 
-  // Renderiza o Componente da Aba Ativa
   const ActiveComponent = TABS_CONFIG[activeTab].component;
 
-  // Renderiza o Modal de Formulário correto para a Aba Ativa
   const renderModalContent = () => {
     const commonProps = {
       establishmentId,
@@ -125,7 +126,6 @@ const BemVindoPageContent = () => {
             </button>
           ))}
         </nav>
-        {/* Adicione um footer ou botão de logout se desejar */}
       </aside>
       
       <main className={styles.mainContent}>
@@ -137,7 +137,7 @@ const BemVindoPageContent = () => {
         <div className={styles.contentArea}>
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={activeTab} // A animação acontece na troca de aba
+                    key={activeTab}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
@@ -149,7 +149,7 @@ const BemVindoPageContent = () => {
                             onAdd={() => openModal()}
                             onEdit={openModal}
                             onDelete={openDeleteDialog}
-                            keyForReRender={reRenderKey} // Passa a chave para o filho
+                            keyForReRender={reRenderKey}
                         />
                     )}
                 </motion.div>
@@ -157,7 +157,6 @@ const BemVindoPageContent = () => {
         </div>
       </main>
 
-      {/* Renderização de Modais e Diálogos */}
       <AnimatePresence>
         {modalState.isOpen && activeTab !== 'dashboard' && (
             <div className={styles.modalBackdrop} onClick={closeModal}>
@@ -177,13 +176,3 @@ const BemVindoPageContent = () => {
     </div>
   );
 };
-
-
-// --- Componente Wrapper com o Provider de Notificações ---
-const BemVindoPageWrapper = () => (
-    <ToastProvider>
-        <BemVindoPageContent />
-    </ToastProvider>
-);
-
-export default BemVindoPageWrapper;

@@ -1,16 +1,24 @@
 "use client";
+
+/**
+ * @module contexts/ToastProvider
+ * @description Este módulo fornece o sistema de notificações (Toasts) para a aplicação.
+ * Ele consiste em um Contexto (ToastContext), um Provedor (ToastProvider), e um hook (useToast).
+ */
+
 import React, { createContext, useState, useCallback, useContext } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-// AQUI ESTÁ A CORREÇÃO: Importando do arquivo CSS que já existe.
 import styles from '../BemVindo.module.css';
 
-// O Contexto agora é exportado corretamente
+// 1. O CONTEXTO: É o "canal" de comunicação. Exportado para o hook usar.
 export const ToastContext = createContext(null);
 
-// Hook para facilitar o uso
+// 2. O HOOK: A forma como os componentes "falam" pelo canal.
+// Ele lança o erro que você está vendo se não encontrar um Provedor acima dele na árvore de componentes.
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
+    // ESTE ERRO SÓ ACONTECE SE A ESTRUTURA DA PÁGINA ESTIVER INCORRETA.
     throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
@@ -18,6 +26,7 @@ export const useToast = () => {
 
 let toastId = 0;
 
+// 3. O PROVEDOR: O componente que "envelopa" a sua aplicação e fornece o valor para o contexto.
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
@@ -26,7 +35,7 @@ export const ToastProvider = ({ children }) => {
     setToasts((prevToasts) => [...prevToasts, { id, message, type }]);
     setTimeout(() => {
       removeToast(id);
-    }, 4000); // O toast some após 4 segundos
+    }, 4000);
   }, []);
 
   const removeToast = useCallback((id) => {
@@ -35,7 +44,10 @@ export const ToastProvider = ({ children }) => {
 
   return (
     <ToastContext.Provider value={{ addToast }}>
+      {/* 'children' é a sua página/componente que será renderizado DENTRO do provedor */}
       {children}
+      
+      {/* Container onde os toasts aparecerão na tela */}
       <div className={styles.toastContainer}>
         <AnimatePresence>
           {toasts.map((toast) => (
