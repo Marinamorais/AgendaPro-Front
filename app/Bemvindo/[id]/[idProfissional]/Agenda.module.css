@@ -320,3 +320,30 @@
     padding: 20px;
     border-radius: 8px;
 }
+
+/* ... (resto do seu CSS) ... */
+
+.dayHeader {
+    text-align: center;
+    padding: 8px 0;
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb; /* Fundo um pouco mais escuro para destacar */
+    z-index: 10;
+    border-bottom: 1px solid #d1d5db;
+}
+
+.dayName {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: #4b5563; /* COR CORRIGIDA: Texto agora visível */
+}
+
+.dayNumber {
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #111827; /* COR CORRIGIDA: Texto agora visível */
+}
+
+/* ... (resto do seu CSS) ... */

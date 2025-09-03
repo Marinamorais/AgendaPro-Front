@@ -2,10 +2,9 @@
 
 /**
  * @module BemVindo/[id]/Page
- * @description Página principal da área logada.
- * Graças ao novo `layout.js`, este componente não precisa mais se preocupar com o ToastProvider.
- * Ele pode chamar `useToast()` diretamente, pois o layout já garantiu a "cobertura".
- * A estrutura do "Wrapper" foi removida daqui, simplificando drasticamente o código.
+ * @description Página principal da área logada, com navegação por abas.
+ * A estrutura foi refatorada para ser mais modular e fácil de manter,
+ * utilizando um objeto de configuração para as abas.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -14,7 +13,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import styles from './BemVindo.module.css';
 import { api } from '../../../service/api';
-// Importamos apenas o hook `useToast`, pois o Provider já está no layout.
 import { useToast } from './contexts/ToastProvider';
 
 // --- Imports dos componentes de cada aba ---
@@ -22,27 +20,29 @@ import DashboardComponent from './components/DashboardComponent';
 import Clientes from './components/Clientes';
 import Profissionais from './components/Profissionais';
 import Produtos from './components/Produtos';
+import Servicos from './components/Servicos'; // <<-- ADICIONADO
 
 // --- Imports dos modais ---
 import ConfirmationDialog from './components/ConfirmationDialog';
 import ProfessionalFormModal from './components/ProfessionalFormModal';
 import ClientFormModal from './components/ClientFormModal';
 import ProductFormModal from './components/ProductFormModal';
+import ServiceFormModal from './components/ServiceFormModal'; // <<-- ADICIONADO
 
+// Objeto de configuração central para as abas
 const TABS_CONFIG = {
   dashboard: { label: 'Dashboard', component: DashboardComponent },
   clientes: { label: 'Clientes', component: Clientes, endpoint: 'clients' },
   profissionais: { label: 'Profissionais', component: Profissionais, endpoint: 'professionals' },
+  servicos: { label: 'Serviços', component: Servicos, endpoint: 'services' }, // <<-- ADICIONADO
   produtos: { label: 'Produtos', component: Produtos, endpoint: 'products' },
 };
 
-// Este agora é o componente padrão exportado. Sem mais wrappers aqui.
 export default function BemVindoPage() {
   const router = useRouter();
   const params = useParams();
   const { id: establishmentId } = params;
   
-  // A chamada ao hook funciona perfeitamente, garantido pelo layout.js.
   const { addToast } = useToast();
 
   const [establishment, setEstablishment] = useState(null);
@@ -103,6 +103,7 @@ export default function BemVindoPage() {
     switch (activeTab) {
       case 'profissionais': return <ProfessionalFormModal {...commonProps} />;
       case 'clientes': return <ClientFormModal {...commonProps} />;
+      case 'servicos': return <ServiceFormModal {...commonProps} />; // <<-- ADICIONADO
       case 'produtos': return <ProductFormModal {...commonProps} />;
       default: return null;
     }
