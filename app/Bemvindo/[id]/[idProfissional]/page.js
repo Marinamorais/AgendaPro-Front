@@ -1,32 +1,16 @@
 "use client";
 import React from 'react';
 import { useParams } from 'next/navigation';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+// CORREÇÃO: Importamos o DragDropContext
+import { DragDropContext } from 'react-beautiful-dnd';
 import { useAgenda } from './hooks/useAgenda';
-import { getWeekDays, generateTimeSlots } from './utils/dateUtils'; // Supondo que você tenha ou crie este utilitário
+import { getWeekDays } from './utils/dateUtils';
 
 import AgendaHeader from './components/AgendaHeader';
 import TimeGrid from './components/TimeGrid';
 import NewAppointmentModal from './components/NewAppointmentModal';
 import AppointmentDetailModal from './components/AppointmentDetailModal';
 import styles from './Agenda.module.css';
-
-// --- Função utilitária para gerar as datas da semana ---
-// Você pode mover isso para um arquivo separado como 'utils/dateUtils.js' se preferir
-const getWeekDates = (currentDate) => {
-  const startOfWeek = new Date(currentDate);
-  const day = startOfWeek.getDay();
-  const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Ajusta para a semana começar na segunda-feira
-  startOfWeek.setDate(diff);
-
-  return Array.from({ length: 7 }).map((_, i) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    return date;
-  });
-};
-
 
 export default function AgendaProfissionalPage() {
   const params = useParams();
@@ -46,13 +30,11 @@ export default function AgendaProfissionalPage() {
     updateAppointmentStatus,
   } = useAgenda(establishmentId, professionalId);
   
-  // Hooks para controlar os modais
   const [isNewAppointmentModalOpen, setNewAppointmentModalOpen] = React.useState(false);
   const [selectedSlot, setSelectedSlot] = React.useState(null);
   const [selectedAppointment, setSelectedAppointment] = React.useState(null);
 
-  // CORREÇÃO: Calculamos as datas da semana aqui
-  const weekDates = getWeekDates(currentDate);
+  const weekDates = getWeekDays(currentDate);
 
   const handleSlotClick = (date, time) => {
     setSelectedSlot({ date, time });
@@ -72,6 +54,36 @@ export default function AgendaProfissionalPage() {
       setSelectedAppointment(null);
   };
 
+  /**
+   * Função para lidar com o final de uma ação de arrastar.
+   * @param {object} result - O objeto com o resultado da ação.
+   */
+  const onDragEnd = (result) => {
+    const { source, destination, draggableId } = result;
+
+    // Se o item for solto fora de uma área válida, não faz nada
+    if (!destination) {
+      return;
+    }
+
+    // Se o item for solto no mesmo lugar, não faz nada
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    console.log('Agendamento movido!');
+    console.log('ID do Agendamento:', draggableId);
+    console.log('Coluna de Origem:', source.droppableId);
+    console.log('Coluna de Destino:', destination.droppableId);
+    
+    // TODO: Adicionar lógica para atualizar o agendamento na API
+    // Ex: updateAppointmentTime(draggableId, destination.droppableId);
+  };
+
+
   if (loading) {
     return <div className={styles.centered}>Carregando agenda...</div>;
   }
@@ -81,50 +93,51 @@ export default function AgendaProfissionalPage() {
   }
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div className={styles.agendaContainer}>
-        <AgendaHeader
-          professionalName={professionalName}
-          currentDate={currentDate}
-          onNextWeek={() => changeWeek('next')}
-          onPrevWeek={() => changeWeek('prev')}
-          onToday={goToToday}
-        />
-        
-        <main className={styles.mainContent}>
-          {/* CORREÇÃO: Passamos a prop 'weekDates' para o TimeGrid */}
+    // Removido o DndProvider que não é o correto para esta biblioteca
+    <div className={styles.agendaContainer}>
+      <AgendaHeader
+        professionalName={professionalName}
+        currentDate={currentDate}
+        onNextWeek={() => changeWeek('next')}
+        onPrevWeek={() => changeWeek('prev')}
+        onToday={goToToday}
+      />
+      
+      <main className={styles.mainContent}>
+        {/* CORREÇÃO: Adicionamos o DragDropContext envolvendo o TimeGrid */}
+        <DragDropContext onDragEnd={onDragEnd}>
           <TimeGrid
             weekDates={weekDates}
             appointments={appointments}
             onSlotClick={handleSlotClick}
             onAppointmentClick={handleAppointmentClick}
           />
-        </main>
+        </DragDropContext>
+      </main>
 
-        {isNewAppointmentModalOpen && selectedSlot && (
-          <NewAppointmentModal
-            isOpen={isNewAppointmentModalOpen}
-            onClose={handleCloseNewAppointmentModal}
-            slotInfo={selectedSlot}
-            establishmentId={establishmentId}
-            professionalId={professionalId}
-            onAppointmentCreated={refreshAgenda}
-            createAppointment={createAppointment}
-          />
-        )}
-        
-        {selectedAppointment && (
-          <AppointmentDetailModal
-            isOpen={!!selectedAppointment}
-            onClose={handleCloseDetailModal}
-            appointment={selectedAppointment}
-            onStatusChange={async (newStatus) => {
-                await updateAppointmentStatus(selectedAppointment.id, newStatus);
-                handleCloseDetailModal();
-            }}
-          />
-        )}
-      </div>
-    </DndProvider>
+      {isNewAppointmentModalOpen && selectedSlot && (
+        <NewAppointmentModal
+          isOpen={isNewAppointmentModalOpen}
+          onClose={handleCloseNewAppointmentModal}
+          slotInfo={selectedSlot}
+          establishmentId={establishmentId}
+          professionalId={professionalId}
+          onAppointmentCreated={refreshAgenda}
+          createAppointment={createAppointment}
+        />
+      )}
+      
+      {selectedAppointment && (
+        <AppointmentDetailModal
+          isOpen={!!selectedAppointment}
+          onClose={handleCloseDetailModal}
+          appointment={selectedAppointment}
+          onStatusChange={async (newStatus) => {
+              await updateAppointmentStatus(selectedAppointment.id, newStatus);
+              handleCloseDetailModal();
+          }}
+        />
+      )}
+    </div>
   );
 }
