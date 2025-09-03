@@ -9,14 +9,16 @@
  * nós o colocamos NESTE layout. O Next.js garante que este componente "envolva"
  * qualquer `page.js` renderizada dentro do diretório `/Bemvindo` e seus subdiretórios.
  *
- * Isso significa que `/Bemvindo/[id]` E `/Bemvindo/[id]/[idProfissional]` e qualquer outra
+ * Isso significa que `/Bemvindo/[id]`, `/Bemvindo/[id]/[idProfissional]` e qualquer outra
  * página que você criar aqui dentro ESTARÃO AUTOMATICAMENTE DENTRO DO TOASTPROVIDER.
  *
  * Problema resolvido na raiz, para sempre.
  */
 
-// Importamos o Provedor que vai "abraçar" todas as páginas filhas.
-import { ToastProvider } from './[id]/contexts/ToastProvider';
+// CORREÇÃO: O caminho foi ajustado para ser relativo ao diretório atual.
+// O arquivo de layout já está em '/[id]', então precisamos apenas apontar
+// para a pasta 'contexts' que está no mesmo nível.
+import { ToastProvider } from './contexts/ToastProvider';
 
 /**
  * O componente de Layout.
@@ -26,7 +28,7 @@ import { ToastProvider } from './[id]/contexts/ToastProvider';
  */
 export default function BemVindoLayout({ children }) {
   // A estrutura é simples: o Provedor envolve os 'children'.
-  // Qualquer chamada ao `useToast()` dentro dos `children` agora vai funcionar.
+  // Qualquer chamada ao `useToast()` dentro dos `children` agora vai funcionar perfeitamente.
   return (
     <ToastProvider>
       {/* A mágica acontece aqui. O {children} será substituído pelo seu page.js */}
