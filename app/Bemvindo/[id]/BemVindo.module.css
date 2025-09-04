@@ -1072,3 +1072,210 @@
 .closeButton:hover {
   opacity: 1;
 }
+
+/* Adicione no final de app/Bemvindo/[id]/BemVindo.module.css */
+
+/* --- ESTRUTURA RAIZ DO DASHBOARD --- */
+.dashboardRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dashboardHeader h3 {
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.periodFilter {
+  display: flex;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  padding: 4px;
+}
+.periodFilter button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #555;
+  transition: all 0.2s ease-in-out;
+}
+.periodFilter button.active {
+  background-color: #fff;
+  color: #00C49F;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* --- GRID LAYOUT DO DASHBOARD --- */
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: auto;
+  gap: 1.5rem;
+  grid-template-areas:
+    "mainMetrics mainMetrics mainMetrics mainMetrics"
+    "revenue revenue secondary secondary"
+    "upcoming antiChurn leaderboards leaderboards"
+    "recentActivity recentActivity recentActivity recentActivity";
+}
+
+.mainMetrics { grid-area: mainMetrics; }
+.revenueChartContainer { grid-area: revenue; }
+.secondaryMetrics { grid-area: secondary; }
+.upcomingAppointments { grid-area: upcoming; }
+.antiChurn { grid-area: antiChurn; }
+.leaderboards { grid-area: leaderboards; }
+.recentActivity { grid-area: recentActivity; }
+
+
+/* --- KPI CARDS V2 --- */
+.kpiGridV2 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+.kpiCardV2 {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+.kpiTitle { font-size: 0.9rem; color: #6b7280; margin-bottom: 0.5rem; }
+.kpiValue { font-size: 2rem; font-weight: 700; color: #111827; }
+.kpiDetail { font-size: 0.8rem; color: #9ca3af; margin-top: auto; }
+
+/* --- WIDGETS E GRÁFICOS --- */
+.chartWrapper, .widgetCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.chartWrapper h4, .widgetTitle {
+  font-size: 1.1rem;
+  color: #333;
+  margin: 0 0 1rem 0;
+}
+.widgetSubtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: -0.75rem 0 1rem 0;
+}
+
+/* --- TABELAS DOS WIDGETS --- */
+.widgetTableWrapper { overflow-y: auto; }
+.widgetTable { width: 100%; border-collapse: collapse; }
+.widgetTable th, .widgetTable td { padding: 0.75rem 0.5rem; text-align: left; border-bottom: 1px solid #f0f0f0; }
+.widgetTable th { font-size: 0.8rem; color: #6b7280; }
+.widgetTable td { font-size: 0.9rem; color: #333; }
+.widgetTable tr:last-child td { border-bottom: none; }
+
+.widgetButton {
+    background-color: #f0fdfa;
+    color: #00C49F;
+    border: 1px solid #00C49F;
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* --- LEADERBOARDS --- */
+.leaderboardContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  height: 100%;
+}
+.leaderboardList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.leaderboardList li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.rank { font-weight: bold; color: #9ca3af; }
+.name { flex-grow: 1; font-weight: 500; }
+.value { font-weight: bold; color: #00C49F; }
+
+/* --- ATIVIDADE RECENTE --- */
+.activityList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.activityItem {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.activityIcon {
+    font-size: 1.5rem;
+    background-color: #f0f0f0;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+}
+.activityText {
+    flex-grow: 1;
+}
+.activityText strong {
+    display: block;
+    font-weight: 600;
+}
+.activityText p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+.activityTime {
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 1200px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "mainMetrics mainMetrics"
+      "revenue secondary"
+      "upcoming antiChurn"
+      "leaderboards leaderboards"
+      "recentActivity recentActivity";
+  }
+  .kpiGridV2 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "mainMetrics" "revenue" "secondary" "upcoming" "antiChurn" "leaderboards" "recentActivity";
+  }
+}

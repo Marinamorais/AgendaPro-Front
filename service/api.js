@@ -206,3 +206,72 @@ export const api = {
   }
 };
 
+// marinamorais/agendapro-front/AgendaPro-Front-e89f19b6f1c85c2718d910d6f3e87d7772852553/service/api.js
+
+// ... (todo o resto do seu api.js)
+
+  dashboard: {
+    getData: async (establishmentId, period = 'monthly') => {
+      if (!establishmentId) throw new Error("ID do Estabelecimento é obrigatório.");
+      
+      const now = new Date();
+      let startDate;
+      
+      if (period === 'daily') {
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+      } else if (period === 'weekly') {
+        startDate = new Date(new Date().setDate(now.getDate() - 7));
+      } else {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+      
+      const params = {
+          establishment_id: establishmentId,
+          start_date: format(startDate, 'yyyy-MM-dd'),
+          end_date: format(new Date(), 'yyyy-MM-dd')
+      };
+
+      try {
+        // Buscas paralelas para máxima performance
+        const [sales, appointments, clients, professionals, services] = await Promise.all([
+          api.sales.getAll(params),
+          api.appointments.getAll(params),
+          api.clients.getAll({ establishment_id: establishmentId }),
+          api.professionals.getAll({ establishment_id: establishmentId }),
+          api.services.getAll({ establishment_id: establishmentId })
+        ]);
+
+        // Processamento e agregação dos dados
+        const totalRevenue = sales.reduce((sum, sale) => sum + parseFloat(sale.final_amount || 0), 0);
+        const totalAppointments = appointments.length;
+        const avgTicket = totalAppointments > 0 ? totalRevenue / totalAppointments : 0;
+
+        // ... (aqui entraria uma lógica mais complexa para os outros KPIs e gráficos)
+
+        return {
+          kpis: {
+            totalRevenue,
+            totalAppointments,
+            avgTicket,
+            newClients: clients.filter(c => new Date(c.created_at) >= startDate).length,
+          },
+          charts: {
+            revenue: sales.map(s => ({ name: new Date(s.transaction_date).toLocaleDateString(), Receita: s.final_amount })),
+            appointments: appointments.map(a => ({ name: new Date(a.start_time).toLocaleDateString(), agendamentos: 1 })), // Simplificado
+          },
+          tables: {
+            services: services.slice(0, 5).map(s => ({ ...s, count: Math.floor(Math.random() * 50) })), // Dados mocados
+            clientsAtRisk: clients.slice(0, 3).map(c => ({...c, last_appointment: new Date()})), // Dados mocados
+            professionalsLeaderboard: professionals.slice(0, 5).map(p => ({ ...p, total_revenue: Math.floor(Math.random() * 5000) })), // Dados mocados
+            recentActivity: [
+                { id: 1, type: 'new_client', title: 'Novo Cliente', description: 'João Silva se cadastrou.', date: new Date() },
+                { id: 2, type: 'new_appointment', title: 'Novo Agendamento', description: 'Maria Souza agendou um corte.', date: new Date() },
+            ]
+          }
+        };
+      } catch (error) {
+        throw new Error(`Não foi possível carregar os dados do dashboard: ${error.message}`);
+      }
+    }
+  }
+// ... (resto do seu api.js)
