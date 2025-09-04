@@ -15,9 +15,11 @@ export const useAgenda = (establishmentId, professionalId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Busca o nome do profissional
   useEffect(() => {
     if (professionalId) {
-      api.getById('professionals', professionalId)
+      // CORREÇÃO: A chamada foi atualizada para usar o novo módulo 'professionals'.
+      api.professionals.getById(professionalId)
         .then(data => setProfessionalName(data.full_name))
         .catch(() => setProfessionalName("Profissional não encontrado"));
     }
@@ -25,32 +27,31 @@ export const useAgenda = (establishmentId, professionalId) => {
   
   /**
    * Busca os agendamentos da SEMANA INTEIRA de uma vez para otimizar a performance.
+   * Utiliza a função de hidratação do serviço de API para obter os dados completos.
    */
   const fetchAppointments = useCallback(async (date) => {
     if (!establishmentId || !professionalId) return;
     setLoading(true);
     setError(null);
     try {
-      // Define o início e o fim da semana com base na data atual.
-      const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Começa na Segunda
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 });
       const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
 
       const params = { 
         professional_id: professionalId,
+        establishment_id: establishmentId,
         start_date: format(weekStart, 'yyyy-MM-dd'),
         end_date: format(weekEnd, 'yyyy-MM-dd'),
-        _embed: 'client,service' // Pede ao backend para incluir dados do cliente e serviço
       };
 
-      const data = await api.get('appointments', params);
-      setAppointments(data || []);
+      // A chamada agora usa a função de hidratação suprema.
+      const data = await api.appointments.getAllHydrated(params);
+      setAppointments(data);
+    
     } catch (err) {
-      if (err.message && err.message.includes('404')) {
-        setAppointments([]);
-      } else {
-        setError("Não foi possível carregar os agendamentos.");
-        addToast(err.message, 'error');
-      }
+      setError("Não foi possível carregar os agendamentos.");
+      addToast(err.message, 'error');
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,7 @@ export const useAgenda = (establishmentId, professionalId) => {
     fetchAppointments(currentDate);
   }, [currentDate, fetchAppointments]);
 
-  // Função vital que permite à página forçar uma recarga dos dados.
+  // Função que a página pode chamar para forçar uma recarga dos dados.
   const refreshAgenda = useCallback(() => {
     fetchAppointments(currentDate);
   }, [currentDate, fetchAppointments]);
@@ -75,14 +76,5 @@ export const useAgenda = (establishmentId, professionalId) => {
 
   const goToToday = () => setCurrentDate(new Date());
 
-  return {
-    currentDate,
-    appointments,
-    professionalName,
-    loading,
-    error,
-    changeWeek,
-    goToToday,
-    refreshAgenda,
-  };
+  return { currentDate, appointments, professionalName, loading, error, changeWeek, goToToday, refreshAgenda };
 };
