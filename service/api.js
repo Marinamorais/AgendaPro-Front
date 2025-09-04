@@ -1,22 +1,11 @@
 /**
  * @module service/api
- * @version 4.0 (Supremo & Antifrágil)
- * @description Módulo de API centralizado de nível profissional para AgendaPro.
- *
- * ARQUITETURA DEFINITIVA:
- * 1.  **Hidratação de Dados Antifrágil:** A função `appointments.getAllHydrated` utiliza `Promise.allSettled`
- * para garantir que a falha em buscar dados secundários (clientes, serviços) não impeça a renderização dos
- * agendamentos, eliminando a principal fonte de erros.
- * 2.  **SDK Completo da API:** O arquivo espelha toda a API do backend, com um módulo dedicado para cada
- * controller, criando um ponto único de verdade para a comunicação com o servidor.
- * 3.  **Cache de Performance com Invalidação:** Implementa um cache in-memory com TTL e um mecanismo para
- * invalidar o cache após operações de escrita (CUD), garantindo performance e dados consistentes.
- * 4.  **Diagnóstico de Erros Cirúrgico:** Uma função `getErrorMessage` que fornece mensagens de erro
- * contextuais e precisas para cada tipo de falha.
- * 5.  **Factory Function para Modularidade:** Utiliza uma factory function `createCrudModule` para gerar
- * módulos CRUD, seguindo o princípio DRY e mantendo o código limpo e escalável.
+ * @version 5.0 (Definitivo)
+ * @description SDK completo e autossuficiente para a API AgendaPro.
+ * Esta é a única camada de comunicação necessária para toda a aplicação.
  */
 import axios from 'axios';
+import { format } from 'date-fns';
 
 // --- CONFIGURAÇÃO CENTRAL DA INSTÂNCIA AXIOS ---
 const apiClient = axios.create({
@@ -43,7 +32,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         localStorage.clear();
-        // window.location.href = '/';
+        window.location.href = '/'; // Redirecionamento forçado para o login
       }
     }
     return Promise.reject(error);
@@ -139,43 +128,30 @@ export const api = {
   },
 
   appointments: {
-    // A FUNÇÃO SUPREMA E ANTIFRÁGIL
     getAllHydrated: async (params) => {
       const appointments = await handleRequest(apiClient.get('/appointments', { params }));
       if (!appointments || appointments.length === 0) return [];
-
       const establishmentId = params.establishment_id;
       if (!establishmentId) throw new Error("establishment_id é necessário para hidratar os dados.");
-
-      // Busca dependências de forma segura com Promise.allSettled
       const [clientsResult, servicesResult] = await Promise.allSettled([
         api.clients.getAll({ establishment_id: establishmentId }),
         api.services.getAll({ establishment_id: establishmentId })
       ]);
-      
       const allClients = clientsResult.status === 'fulfilled' ? clientsResult.value : [];
       const allServices = servicesResult.status === 'fulfilled' ? servicesResult.value : [];
-
       if (clientsResult.status === 'rejected') console.error("Falha ao buscar clientes:", clientsResult.reason);
       if (servicesResult.status === 'rejected') console.error("Falha ao buscar serviços:", servicesResult.reason);
-      
       const clientsMap = new Map(allClients.map(c => [c.id, c]));
       const servicesMap = new Map(allServices.map(s => [s.id, s]));
-
       return appointments.map(app => ({
         ...app,
-        client: clientsMap.get(app.client_id) || { id: app.client_id, full_name: 'Cliente não encontrado' },
-        service: servicesMap.get(app.service_id) || { id: app.service_id, name: 'Serviço não encontrado' }
+        client: clientsMap.get(app.client_id) || { id: app.client_id, full_name: 'Cliente Removido' },
+        service: servicesMap.get(app.service_id) || { id: app.service_id, name: 'Serviço Removido' }
       }));
     },
-    // Mantém as operações CRUD básicas
-    getById: (id) => createCrudModule('appointments').getById(id),
-    create: (data) => createCrudModule('appointments').create(data),
-    update: (id, data) => createCrudModule('appointments').update(id, data),
-    delete: (id) => createCrudModule('appointments').delete(id),
+    ...createCrudModule('appointments'),
   },
   
-  // Módulos CRUD gerados pela Factory
   clients:       createCrudModule('clients'),
   professionals: createCrudModule('professionals'),
   services:      createCrudModule('services'),
@@ -190,8 +166,43 @@ export const api = {
   
   dashboard: {
     getData: async (establishmentId, period = 'monthly') => {
-      // Esta lógica de agregação de alto nível permanece aqui
-      return { kpis: {}, charts: {}, tables: {} };
+      if (!establishmentId) throw new Error("ID do Estabelecimento é obrigatório.");
+      const now = new Date();
+      let startDate;
+      if (period === 'daily') startDate = new Date(now.setHours(0, 0, 0, 0));
+      else if (period === 'weekly') startDate = new Date(new Date().setDate(now.getDate() - 7));
+      else startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      const params = {
+          establishment_id: establishmentId,
+          start_date: format(startDate, 'yyyy-MM-dd'),
+          end_date: format(new Date(), 'yyyy-MM-dd')
+      };
+
+      try {
+        const [sales, appointments, clients, professionals] = await Promise.all([
+          api.sales.getAll(params),
+          api.appointments.getAll(params),
+          api.clients.getAll({ establishment_id: establishmentId }),
+          api.professionals.getAll({ establishment_id: establishmentId })
+        ]);
+
+        const totalRevenue = sales.reduce((sum, sale) => sum + parseFloat(sale.final_amount || 0), 0);
+        
+        return {
+          kpis: {
+            totalRevenue: totalRevenue,
+            totalAppointments: appointments.length,
+          },
+          charts: { /* dados para gráficos */ },
+          tables: {
+            upcomingAppointments: appointments.filter(a => new Date(a.start_time) > new Date()).slice(0,5)
+          }
+        };
+      } catch (error) {
+        throw new Error(`Não foi possível carregar os dados do dashboard: ${error.message}`);
+      }
     }
   }
 };
+
