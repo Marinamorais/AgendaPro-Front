@@ -1,9 +1,10 @@
 "use client";
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-// CORREÇÃO: Importamos o DragDropContext
 import { DragDropContext } from 'react-beautiful-dnd';
 import { useAgenda } from './hooks/useAgenda';
+import { useToast } from '../contexts/ToastProvider';
+import { api } from '../../../../service/api';
 import { getWeekDays } from './utils/dateUtils';
 
 import AgendaHeader from './components/AgendaHeader';
@@ -12,88 +13,68 @@ import NewAppointmentModal from './components/NewAppointmentModal';
 import AppointmentDetailModal from './components/AppointmentDetailModal';
 import styles from './Agenda.module.css';
 
+/**
+ * Página principal da Agenda, atuando como o "Controlador".
+ * Orquestra o estado, as chamadas de API e a renderização dos componentes.
+ */
 export default function AgendaProfissionalPage() {
   const params = useParams();
+  const { addToast } = useToast();
   const establishmentId = params.id;
   const professionalId = params.idProfissional;
 
-  const {
-    currentDate,
-    appointments,
-    professionalName,
-    loading,
-    error,
-    changeWeek,
-    goToToday,
-    refreshAgenda,
-    createAppointment,
-    updateAppointmentStatus,
-  } = useAgenda(establishmentId, professionalId);
+  // O hook agora só fornece dados e controle de data.
+  const { currentDate, appointments, professionalName, loading, error, changeWeek, goToToday, refreshAgenda } = useAgenda(establishmentId, professionalId);
   
-  const [isNewAppointmentModalOpen, setNewAppointmentModalOpen] = React.useState(false);
-  const [selectedSlot, setSelectedSlot] = React.useState(null);
-  const [selectedAppointment, setSelectedAppointment] = React.useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  const weekDates = getWeekDays(currentDate);
+  // --- LÓGICA DE API CENTRALIZADA AQUI ---
 
-  const handleSlotClick = (date, time) => {
-    setSelectedSlot({ date, time });
-    setNewAppointmentModalOpen(true);
-  };
-  
-  const handleAppointmentClick = (appointment) => {
-      setSelectedAppointment(appointment);
-  };
-
-  const handleCloseNewAppointmentModal = () => {
-    setNewAppointmentModalOpen(false);
-    setSelectedSlot(null);
-  };
-  
-  const handleCloseDetailModal = () => {
-      setSelectedAppointment(null);
-  };
-
-  /**
-   * Função para lidar com o final de uma ação de arrastar.
-   * @param {object} result - O objeto com o resultado da ação.
-   */
-  const onDragEnd = (result) => {
-    const { source, destination, draggableId } = result;
-
-    // Se o item for solto fora de uma área válida, não faz nada
-    if (!destination) {
-      return;
+  const handleCreateAppointment = useCallback(async (payload) => {
+    try {
+      await api.create('appointments', payload);
+      addToast('Agendamento criado com sucesso!', 'success');
+      refreshAgenda(); // Recarrega os dados da agenda
+      setSelectedSlot(null); // Fecha o modal
+    } catch (err) {
+      addToast(`Erro ao criar agendamento: ${err.message}`, 'error');
+      throw err; // Lança o erro para o modal saber que falhou
     }
+  }, [addToast, refreshAgenda]);
 
-    // Se o item for solto no mesmo lugar, não faz nada
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
+  const handleUpdateStatus = useCallback(async (appointmentId, newStatus) => {
+    try {
+      await api.update('appointments', appointmentId, { status: newStatus });
+      addToast('Status atualizado com sucesso!', 'success');
+      refreshAgenda();
+      setSelectedAppointment(null); // Fecha o modal de detalhes
+    } catch (err) {
+      addToast(`Erro ao atualizar status: ${err.message}`, 'error');
     }
+  }, [addToast, refreshAgenda]);
 
-    console.log('Agendamento movido!');
-    console.log('ID do Agendamento:', draggableId);
-    console.log('Coluna de Origem:', source.droppableId);
-    console.log('Coluna de Destino:', destination.droppableId);
+  const handleDragEnd = useCallback(async (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination || (destination.droppableId === source.droppableId)) return;
     
-    // TODO: Adicionar lógica para atualizar o agendamento na API
-    // Ex: updateAppointmentTime(draggableId, destination.droppableId);
-  };
+    try {
+      const appointmentId = draggableId;
+      const newStartTime = `${destination.droppableId}T${source.droppableId.split(' ')[1]}:00`; // Lógica simplificada
+      addToast('Função de arrastar ainda em desenvolvimento.', 'info');
+      // Lógica de update da API viria aqui.
+      // await api.update('appointments', appointmentId, { start_time: newStartTime });
+      // refreshAgenda();
+    } catch (err) {
+      addToast(`Erro ao mover agendamento: ${err.message}`, 'error');
+    }
+  }, [addToast, refreshAgenda]);
 
 
-  if (loading) {
-    return <div className={styles.centered}>Carregando agenda...</div>;
-  }
-
-  if (error) {
-    return <div className={styles.centeredError}>{error}</div>;
-  }
+  if (loading) return <div className={styles.centered}>Carregando agenda...</div>;
+  if (error) return <div className={styles.centeredError}>{error}</div>;
 
   return (
-    // Removido o DndProvider que não é o correto para esta biblioteca
     <div className={styles.agendaContainer}>
       <AgendaHeader
         professionalName={professionalName}
@@ -104,38 +85,31 @@ export default function AgendaProfissionalPage() {
       />
       
       <main className={styles.mainContent}>
-        {/* CORREÇÃO: Adicionamos o DragDropContext envolvendo o TimeGrid */}
-        <DragDropContext onDragEnd={onDragEnd}>
+        <DragDropContext onDragEnd={handleDragEnd}>
           <TimeGrid
-            weekDates={weekDates}
+            weekDates={getWeekDays(currentDate)}
             appointments={appointments}
-            onSlotClick={handleSlotClick}
-            onAppointmentClick={handleAppointmentClick}
+            onSlotClick={(date, time) => setSelectedSlot({ date, time })}
+            onAppointmentClick={setSelectedAppointment}
           />
         </DragDropContext>
       </main>
 
-      {isNewAppointmentModalOpen && selectedSlot && (
+      {selectedSlot && (
         <NewAppointmentModal
-          isOpen={isNewAppointmentModalOpen}
-          onClose={handleCloseNewAppointmentModal}
-          slotInfo={selectedSlot}
+          slot={selectedSlot}
+          onClose={() => setSelectedSlot(null)}
+          onSave={handleCreateAppointment} // Passa a função de salvar correta
           establishmentId={establishmentId}
           professionalId={professionalId}
-          onAppointmentCreated={refreshAgenda}
-          createAppointment={createAppointment}
         />
       )}
       
       {selectedAppointment && (
         <AppointmentDetailModal
-          isOpen={!!selectedAppointment}
-          onClose={handleCloseDetailModal}
           appointment={selectedAppointment}
-          onStatusChange={async (newStatus) => {
-              await updateAppointmentStatus(selectedAppointment.id, newStatus);
-              handleCloseDetailModal();
-          }}
+          onClose={() => setSelectedAppointment(null)}
+          onStatusChange={handleUpdateStatus}
         />
       )}
     </div>

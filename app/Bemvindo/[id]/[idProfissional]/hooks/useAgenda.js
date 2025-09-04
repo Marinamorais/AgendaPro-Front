@@ -1,21 +1,22 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
-import { api } from '../../../../../service/api'; // Certifique-se que o caminho está correto
+import { api } from '../../../../../service/api';
 import { format } from 'date-fns';
+import { useToast } from '../../contexts/ToastProvider';
 
 /**
- * @module hooks/useAgenda
- * @description Hook customizado que encapsula toda a lógica de estado e
- * comunicação com a API para a página de agenda de um profissional.
+ * Hook customizado para gerenciar o estado e os dados da agenda.
+ * Responsável por buscar agendamentos e controlar a data da semana.
  */
 export const useAgenda = (establishmentId, professionalId) => {
+  const { addToast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState([]);
   const [professionalName, setProfessionalName] = useState("Carregando...");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Busca o nome do profissional uma única vez
+  // Busca o nome do profissional
   useEffect(() => {
     if (professionalId) {
       api.getById('professionals', professionalId)
@@ -24,92 +25,47 @@ export const useAgenda = (establishmentId, professionalId) => {
     }
   }, [professionalId]);
   
-  /**
-   * Busca os agendamentos para um profissional em uma data específica.
-   * A função agora trata a ausência de agendamentos (erros 404) como um
-   * array vazio, em vez de um erro de aplicação.
-   */
+  // Função para buscar os agendamentos
   const fetchAppointments = useCallback(async (date) => {
     if (!establishmentId || !professionalId) return;
-
     setLoading(true);
     setError(null);
     try {
       const formattedDate = format(date, 'yyyy-MM-dd');
-      
-      const fetchedAppointments = await api.get('appointments', {
-        professional_id: professionalId,
-        date: formattedDate,
-      });
-
-      // A API retornou dados, então atualizamos o estado.
-      setAppointments(fetchedAppointments || []);
-
+      const params = { professional_id: professionalId, date: formattedDate };
+      const data = await api.get('appointments', params);
+      setAppointments(data || []);
     } catch (err) {
-      // CORREÇÃO PRINCIPAL:
-      // Se o erro da API contiver uma mensagem indicando "não encontrado"
-      // ou se simplesmente não houver agendamentos, consideramos a lista vazia.
-      // Isso evita que a tela de erro seja mostrada desnecessariamente.
-      if (err.message && err.message.toLowerCase().includes('não encontrado')) {
-        setAppointments([]); // Define como vazio, que é o estado correto
+      // Se não encontrar agendamentos, mostra a agenda vazia em vez de um erro.
+      if (err.message.includes('404')) {
+        setAppointments([]);
       } else {
-        // Para outros erros (falha de rede, erro de servidor), mostramos a mensagem.
-        console.error("Erro ao buscar agendamentos:", err);
-        setError("Não foi possível carregar os agendamentos. Verifique sua conexão.");
+        setError("Não foi possível carregar os agendamentos.");
+        addToast(err.message, 'error');
       }
     } finally {
       setLoading(false);
     }
-  }, [establishmentId, professionalId]);
+  }, [establishmentId, professionalId, addToast]);
 
   useEffect(() => {
     fetchAppointments(currentDate);
   }, [currentDate, fetchAppointments]);
 
+  // Função para forçar a atualização da agenda, chamada pela página principal.
+  const refreshAgenda = useCallback(() => {
+    fetchAppointments(currentDate);
+  }, [currentDate, fetchAppointments]);
+
   const changeWeek = (direction) => {
-    setCurrentDate(prevDate => {
-      const newDate = new Date(prevDate);
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
       newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
       return newDate;
     });
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-  
-  const refreshAgenda = useCallback(() => {
-    fetchAppointments(currentDate);
-  }, [currentDate, fetchAppointments]);
-
-
-  const createAppointment = useCallback(async (appointmentData) => {
-      try {
-          const payload = {
-            ...appointmentData,
-            professional_id: professionalId,
-            establishment_id: establishmentId,
-          };
-          await api.create('appointments', payload);
-          refreshAgenda(); // Atualiza a agenda para mostrar o novo item
-          return { success: true };
-      } catch (err) {
-          console.error("Erro ao criar agendamento:", err);
-          return { success: false, message: err.message };
-      }
-  }, [professionalId, establishmentId, refreshAgenda]);
-  
-    const updateAppointmentStatus = useCallback(async (appointmentId, newStatus) => {
-    try {
-      await api.update('appointments', appointmentId, { status: newStatus });
-      refreshAgenda();
-      return { success: true };
-    } catch (err) {
-      console.error("Erro ao atualizar status:", err);
-      return { success: false, message: err.message };
-    }
-  }, [refreshAgenda]);
-
+  const goToToday = () => setCurrentDate(new Date());
 
   return {
     currentDate,
@@ -119,8 +75,6 @@ export const useAgenda = (establishmentId, professionalId) => {
     error,
     changeWeek,
     goToToday,
-    refreshAgenda,
-    createAppointment,
-    updateAppointmentStatus,
+    refreshAgenda, // Expondo a função para recarregar
   };
 };
