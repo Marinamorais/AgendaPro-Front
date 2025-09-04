@@ -347,3 +347,63 @@
 }
 
 /* ... (resto do seu CSS) ... */
+
+/* ... outros estilos ... */
+
+/* --- Bloco de Agendamento (AppointmentBlock) --- */
+.appointmentBlock {
+    padding: 10px;
+    margin: 2px;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+    border-left: 5px solid rgba(0,0,0,0.3);
+}
+
+.appointmentBlock:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 5;
+}
+
+.appointmentHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.appointmentBody {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.appointmentInfo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    opacity: 0.95;
+}
+
+/* --- NOVAS CORES DE STATUS --- */
+.statusPendente { background-color: #f59e0b; border-left-color: #d97706; } /* Laranja */
+.statusAgendado { background-color: #3b82f6; border-left-color: #2563eb; } /* Azul */
+.statusEmAndamento { background-color: #8b5cf6; border-left-color: #7c3aed; } /* Roxo */
+.statusFeito { background-color: #10b981; border-left-color: #059669; } /* Verde Esmeralda */
+.statusCancelado { 
+    background-color: #ef4444; 
+    border-left-color: #b91c1c; 
+    opacity: 0.8;
+}
+.statusCancelado span {
+    text-decoration: line-through;
+}
+
+/* ... outros estilos ... */

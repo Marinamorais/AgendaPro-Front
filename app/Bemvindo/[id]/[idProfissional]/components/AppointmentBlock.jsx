@@ -1,51 +1,74 @@
 "use client";
-import React from "react";
-import { Draggable } from "react-beautiful-dnd";
-import styles from "../Agenda.module.css";
-import { FaCheck, FaTimes, FaDollarSign, FaClock } from 'react-icons/fa';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { format, parseISO, isPast } from 'date-fns';
+import { FaUser, FaTools, FaClock, FaCheckCircle, FaTimesCircle, FaDollarSign, FaHourglassHalf } from 'react-icons/fa';
+import styles from '../Agenda.module.css';
 
-export default function AppointmentBlock({ appointment, index, onBlockClick }) {
-  const { id, start_time, duration_minutes, client_name, service_name, status } = appointment;
+// Configuração central para mapear status a estilos e ícones
+const STATUS_CONFIG = {
+  'Pendente': { className: styles.statusPendente, Icon: FaHourglassHalf, label: 'Pendente' },
+  'Agendado': { className: styles.statusAgendado, Icon: FaClock, label: 'Agendado' },
+  'Em Andamento': { className: styles.statusEmAndamento, Icon: FaHourglassHalf, label: 'Em Atendimento' },
+  'Feito': { className: styles.statusFeito, Icon: FaCheckCircle, label: 'Feito' },
+  'Cancelado': { className: styles.statusCancelado, Icon: FaTimesCircle, label: 'Cancelado' },
+  // Status padrão para qualquer outro caso
+  default: { className: styles.statusAgendado, Icon: FaClock, label: 'Agendado' }
+};
 
-  const [hours, minutes] = start_time.split(":").map(Number);
-  const topPosition = (hours * 60 + minutes) - (7 * 60); // Posição em minutos a partir das 7h
-  const blockHeight = duration_minutes; // 1 minuto = 1px
 
-  const statusConfig = {
-    Agendado: { className: styles.agendado, Icon: FaClock, label: "Agendado" },
-    Confirmado: { className: styles.confirmado, Icon: FaCheck, label: "Confirmado" },
-    Finalizado: { className: styles.finalizado, Icon: FaDollarSign, label: "Finalizado" },
-    Cancelado: { className: styles.cancelado, Icon: FaTimes, label: "Cancelado" },
-  };
+const AppointmentBlock = ({ appointment }) => {
+  if (!appointment) return null;
 
-  const currentStatus = statusConfig[status] || statusConfig['Agendado'];
+  // Desestruturação dos dados do agendamento, incluindo os objetos aninhados
+  const { id, start_time, service, client, status } = appointment;
+
+  // Extrai informações com segurança, com fallbacks para evitar erros
+  const clientName = client?.full_name || 'Cliente não identificado';
+  const serviceName = service?.name || 'Serviço não especificado';
+  const duration = service?.duration_minutes || 60;
+
+  const startTimeObj = parseISO(start_time);
+  
+  // Lógica de status dinâmico
+  let currentStatusKey = status || 'Agendado';
+  // Se o status for pendente e o horário já passou, trata como cancelado visualmente.
+  if (currentStatusKey === 'Pendente' && isPast(startTimeObj)) {
+    currentStatusKey = 'Cancelado';
+  }
+  
+  const { className, Icon, label } = STATUS_CONFIG[currentStatusKey] || STATUS_CONFIG.default;
 
   return (
-    <Draggable draggableId={String(id)} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          className={`${styles.appointmentBlock} ${currentStatus.className} ${snapshot.isDragging ? styles.isDragging : ''}`}
-          style={{
-            top: `${topPosition}px`,
-            height: `${blockHeight}px`,
-            ...provided.draggableProps.style,
-          }}
-          onClick={() => onBlockClick(appointment)}
-          title={`${service_name} com ${client_name} - ${currentStatus.label}`}
-        >
-          <div className={styles.appointmentContent}>
-            <div className={styles.appointmentHeader}>
-              <currentStatus.Icon className={styles.statusIcon} />
-              <span className={styles.appointmentTime}>{start_time}</span>
-            </div>
-            <p className={styles.serviceName}>{service_name}</p>
-            <p className={styles.clientName}>{client_name}</p>
-          </div>
+    <motion.div
+      layout
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className={`${styles.appointmentBlock} ${className}`}
+      title={`${serviceName} com ${clientName} - ${label}`}
+    >
+      <div className={styles.appointmentHeader}>
+        <Icon title={label} />
+        <strong>{format(startTimeObj, 'HH:mm')}</strong>
+      </div>
+      <div className={styles.appointmentBody}>
+        <div className={styles.appointmentInfo}>
+          <FaUser />
+          <span>{clientName}</span>
         </div>
-      )}
-    </Draggable>
+        <div className={styles.appointmentInfo}>
+          <FaTools />
+          <span>{serviceName}</span>
+        </div>
+        <div className={styles.appointmentInfo}>
+          <FaClock />
+          <span>{duration} min</span>
+        </div>
+      </div>
+    </motion.div>
   );
-}
+};
+
+export default AppointmentBlock;

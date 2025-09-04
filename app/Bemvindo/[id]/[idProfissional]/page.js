@@ -14,7 +14,7 @@ import AppointmentDetailModal from './components/AppointmentDetailModal';
 import styles from './Agenda.module.css';
 
 /**
- * Página principal da Agenda, atuando como o "Controlador".
+ * Página principal da Agenda. Atua como o "Controlador Supremo".
  * Orquestra o estado, as chamadas de API e a renderização dos componentes.
  */
 export default function AgendaProfissionalPage() {
@@ -23,23 +23,40 @@ export default function AgendaProfissionalPage() {
   const establishmentId = params.id;
   const professionalId = params.idProfissional;
 
-  // O hook agora só fornece dados e controle de data.
-  const { currentDate, appointments, professionalName, loading, error, changeWeek, goToToday, refreshAgenda } = useAgenda(establishmentId, professionalId);
+  // O hook agora é a nossa "Fonte da Verdade" para os dados da agenda.
+  const { 
+    currentDate, 
+    appointments, 
+    professionalName, 
+    loading, 
+    error, 
+    changeWeek, 
+    goToToday, 
+    refreshAgenda // A função chave para a reatividade.
+  } = useAgenda(establishmentId, professionalId);
   
+  // Estados para controlar a visibilidade e os dados dos modais.
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // --- LÓGICA DE API CENTRALIZADA AQUI ---
+  // --- LÓGICA DE API CENTRALIZADA ---
 
+  /**
+   * Função suprema para criar um novo agendamento.
+   * É passada para o modal, que apenas a executa com os dados do formulário.
+   */
   const handleCreateAppointment = useCallback(async (payload) => {
     try {
       await api.create('appointments', payload);
       addToast('Agendamento criado com sucesso!', 'success');
-      refreshAgenda(); // Recarrega os dados da agenda
+      
+      // A CORREÇÃO DEFINITIVA: Após o sucesso, comanda a atualização da agenda.
+      refreshAgenda(); 
+      
       setSelectedSlot(null); // Fecha o modal
     } catch (err) {
       addToast(`Erro ao criar agendamento: ${err.message}`, 'error');
-      throw err; // Lança o erro para o modal saber que falhou
+      throw err; // Lança o erro para o modal saber que a operação falhou.
     }
   }, [addToast, refreshAgenda]);
 
@@ -48,28 +65,18 @@ export default function AgendaProfissionalPage() {
       await api.update('appointments', appointmentId, { status: newStatus });
       addToast('Status atualizado com sucesso!', 'success');
       refreshAgenda();
-      setSelectedAppointment(null); // Fecha o modal de detalhes
+      setSelectedAppointment(null);
     } catch (err) {
       addToast(`Erro ao atualizar status: ${err.message}`, 'error');
     }
   }, [addToast, refreshAgenda]);
 
-  const handleDragEnd = useCallback(async (result) => {
-    const { destination, source, draggableId } = result;
-    if (!destination || (destination.droppableId === source.droppableId)) return;
-    
-    try {
-      const appointmentId = draggableId;
-      const newStartTime = `${destination.droppableId}T${source.droppableId.split(' ')[1]}:00`; // Lógica simplificada
-      addToast('Função de arrastar ainda em desenvolvimento.', 'info');
-      // Lógica de update da API viria aqui.
-      // await api.update('appointments', appointmentId, { start_time: newStartTime });
-      // refreshAgenda();
-    } catch (err) {
-      addToast(`Erro ao mover agendamento: ${err.message}`, 'error');
-    }
-  }, [addToast, refreshAgenda]);
-
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    addToast('Funcionalidade de arrastar e soltar em desenvolvimento.', 'info');
+    // Futura lógica de API para salvar a alteração viria aqui.
+    // Ex: handleUpdateAppointmentTime(result.draggableId, result.destination.droppableId);
+  };
 
   if (loading) return <div className={styles.centered}>Carregando agenda...</div>;
   if (error) return <div className={styles.centeredError}>{error}</div>;
@@ -85,7 +92,7 @@ export default function AgendaProfissionalPage() {
       />
       
       <main className={styles.mainContent}>
-        <DragDropContext onDragEnd={handleDragEnd}>
+        <DragDropContext onDragEnd={onDragEnd}>
           <TimeGrid
             weekDates={getWeekDays(currentDate)}
             appointments={appointments}
@@ -95,11 +102,12 @@ export default function AgendaProfissionalPage() {
         </DragDropContext>
       </main>
 
+      {/* O modal só é renderizado quando um slot é selecionado */}
       {selectedSlot && (
         <NewAppointmentModal
           slot={selectedSlot}
           onClose={() => setSelectedSlot(null)}
-          onSave={handleCreateAppointment} // Passa a função de salvar correta
+          onSave={handleCreateAppointment} // Passa a função de salvar, centralizada aqui.
           establishmentId={establishmentId}
           professionalId={professionalId}
         />

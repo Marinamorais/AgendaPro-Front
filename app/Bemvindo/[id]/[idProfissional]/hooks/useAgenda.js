@@ -1,12 +1,11 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../../../../service/api';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { useToast } from '../../contexts/ToastProvider';
 
 /**
- * Hook customizado para gerenciar o estado e os dados da agenda.
- * Responsável por buscar agendamentos e controlar a data da semana.
+ * Hook customizado que atua como a "Fonte da Verdade" para os dados da agenda.
  */
 export const useAgenda = (establishmentId, professionalId) => {
   const { addToast } = useToast();
@@ -16,7 +15,6 @@ export const useAgenda = (establishmentId, professionalId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Busca o nome do profissional
   useEffect(() => {
     if (professionalId) {
       api.getById('professionals', professionalId)
@@ -25,19 +23,29 @@ export const useAgenda = (establishmentId, professionalId) => {
     }
   }, [professionalId]);
   
-  // Função para buscar os agendamentos
+  /**
+   * Busca os agendamentos da SEMANA INTEIRA de uma vez para otimizar a performance.
+   */
   const fetchAppointments = useCallback(async (date) => {
     if (!establishmentId || !professionalId) return;
     setLoading(true);
     setError(null);
     try {
-      const formattedDate = format(date, 'yyyy-MM-dd');
-      const params = { professional_id: professionalId, date: formattedDate };
+      // Define o início e o fim da semana com base na data atual.
+      const weekStart = startOfWeek(date, { weekStartsOn: 1 }); // Começa na Segunda
+      const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+
+      const params = { 
+        professional_id: professionalId,
+        start_date: format(weekStart, 'yyyy-MM-dd'),
+        end_date: format(weekEnd, 'yyyy-MM-dd'),
+        _embed: 'client,service' // Pede ao backend para incluir dados do cliente e serviço
+      };
+
       const data = await api.get('appointments', params);
       setAppointments(data || []);
     } catch (err) {
-      // Se não encontrar agendamentos, mostra a agenda vazia em vez de um erro.
-      if (err.message.includes('404')) {
+      if (err.message && err.message.includes('404')) {
         setAppointments([]);
       } else {
         setError("Não foi possível carregar os agendamentos.");
@@ -52,7 +60,7 @@ export const useAgenda = (establishmentId, professionalId) => {
     fetchAppointments(currentDate);
   }, [currentDate, fetchAppointments]);
 
-  // Função para forçar a atualização da agenda, chamada pela página principal.
+  // Função vital que permite à página forçar uma recarga dos dados.
   const refreshAgenda = useCallback(() => {
     fetchAppointments(currentDate);
   }, [currentDate, fetchAppointments]);
@@ -75,6 +83,6 @@ export const useAgenda = (establishmentId, professionalId) => {
     error,
     changeWeek,
     goToToday,
-    refreshAgenda, // Expondo a função para recarregar
+    refreshAgenda,
   };
 };

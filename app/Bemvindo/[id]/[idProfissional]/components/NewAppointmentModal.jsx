@@ -9,13 +9,17 @@ import { api } from '../../../../../service/api';
 import { useToast } from '../../contexts/ToastProvider';
 import styles from '../Agenda.module.css';
 
-// Schema de validação para o agendamento
+// Schema de validação Zod: Um contrato que os dados DEVEM seguir.
 const appointmentSchema = z.object({
-  client_id: z.string().min(1, "Por favor, selecione um cliente."),
-  service_id: z.string().min(1, "Por favor, selecione um serviço."),
+  client_id: z.string().uuid("Por favor, selecione um cliente válido."),
+  service_id: z.string().uuid("Por favor, selecione um serviço válido."),
   notes: z.string().optional(),
 });
 
+/**
+ * Modal para criar um novo agendamento.
+ * Blindado, robusto e com validação de dados de nível supremo.
+ */
 const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professionalId }) => {
   const { addToast } = useToast();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -26,7 +30,7 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
   const [services, setServices] = useState([]);
   const [loadingDependencies, setLoadingDependencies] = useState(true);
 
-  // Busca clientes e serviços quando o modal é aberto
+  // Busca clientes e serviços de forma segura quando o modal é aberto.
   useEffect(() => {
     const fetchDependencies = async () => {
       setLoadingDependencies(true);
@@ -38,40 +42,47 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
         setClients(clientsData || []);
         setServices(servicesData || []);
       } catch (error) {
-        addToast("Erro ao carregar dados para o agendamento.", 'error');
-        console.error("Dependency fetch error:", error);
+        addToast("Erro fatal: Não foi possível carregar clientes e serviços.", 'error');
+        onClose(); // Fecha o modal se os dados essenciais não puderem ser carregados
       } finally {
         setLoadingDependencies(false);
       }
     };
     fetchDependencies();
-  }, [establishmentId, addToast]);
+  }, [establishmentId, addToast, onClose]);
 
   const onSubmit = async (formData) => {
-    if (!slot || !slot.date || !slot.time) {
+    // Validação extra para garantir que o slot de horário é válido.
+    if (!slot?.date || !slot.time) {
       addToast("Erro: Dados de horário inválidos.", "error");
       return;
     }
 
-    // Combina a data e a hora do slot em um objeto Date do JavaScript
-    const dateTimeString = `${format(slot.date, 'yyyy-MM-dd')} ${slot.time}`;
-    const startTime = parse(dateTimeString, 'yyyy-MM-dd HH:mm', new Date());
+    // Combina data e hora para criar um objeto Date e depois o formato ISO 8601.
+    const startTime = parse(
+      `${format(slot.date, 'yyyy-MM-dd')} ${slot.time}`, 
+      'yyyy-MM-dd HH:mm', 
+      new Date()
+    );
 
-    // CORREÇÃO CENTRAL: Monta o payload exatamente como o backend espera
+    // --- A CORREÇÃO SUPREMA ---
+    // Construção do payload sem parseInt, garantindo que os UUIDs sejam strings.
+    // Apenas os campos esperados pela API são enviados.
     const payload = {
-      ...formData,
-      client_id: parseInt(formData.client_id, 10),
-      service_id: parseInt(formData.service_id, 10),
-      professional_id: parseInt(professionalId, 10),
-      establishment_id: parseInt(establishmentId, 10),
-      start_time: startTime.toISOString(), // Envia a data e hora no formato ISO completo
-      status: 'Agendado',
+      client_id: formData.client_id,
+      service_id: formData.service_id,
+      notes: formData.notes,
+      professional_id: professionalId,
+      establishment_id: establishmentId,
+      start_time: startTime.toISOString(),
+      // O backend cuidará do status, end_time e duration.
     };
 
     try {
-      await onSave(payload); // Chama a função onSave passada pela página pai
+      await onSave(payload); // Chama a função da página pai, que tem o try/catch
     } catch (err) {
-      // O erro já é tratado na página pai, que mostra o toast
+      // O erro já é exibido pelo toast na página pai.
+      // O 'catch' aqui impede o modal de fechar em caso de falha.
       console.error("Falha ao salvar agendamento:", err);
     }
   };
@@ -92,14 +103,16 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
           <h2 className={styles.modalTitle}>Novo Agendamento</h2>
           <button onClick={onClose} className={styles.closeButton}>×</button>
         </div>
-        <p>Agendando para <strong>{format(slot.date, 'dd/MM/yyyy')}</strong> às <strong>{slot.time}</strong></p>
+        <p className={styles.modalSubtitle}>
+          Para: <strong>{format(slot.date, 'dd/MM/yyyy')}</strong> às <strong>{slot.time}</strong>
+        </p>
         
-        {loadingDependencies ? <p>Carregando...</p> : (
+        {loadingDependencies ? <p>Carregando dados...</p> : (
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className={styles.formGroup}>
               <label htmlFor="client_id">Cliente</label>
               <select id="client_id" {...register("client_id")} className={errors.client_id ? styles.inputError : styles.formSelect}>
-                <option value="">Selecione um cliente</option>
+                <option value="">Selecione um cliente...</option>
                 {clients.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
               </select>
               {errors.client_id && <p className={styles.errorMessage}>{errors.client_id.message}</p>}
@@ -108,7 +121,7 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
             <div className={styles.formGroup}>
               <label htmlFor="service_id">Serviço</label>
               <select id="service_id" {...register("service_id")} className={errors.service_id ? styles.inputError : styles.formSelect}>
-                <option value="">Selecione um serviço</option>
+                <option value="">Selecione um serviço...</option>
                 {services.map(s => <option key={s.id} value={s.id}>{s.name} - R$ {s.price}</option>)}
               </select>
               {errors.service_id && <p className={styles.errorMessage}>{errors.service_id.message}</p>}
@@ -130,6 +143,6 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
       </motion.div>
     </div>
   );
-}
+};
 
 export default NewAppointmentModal;
