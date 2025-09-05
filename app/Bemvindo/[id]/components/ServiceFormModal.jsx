@@ -42,11 +42,11 @@ const ServiceFormModal = ({ closeModal, establishmentId, onSuccess, initialData 
 
     try {
       if (initialData?.id) {
-        await api.update('services', initialData.id, serviceData);
+        await api.services.update(initialData.id, serviceData);
       } else {
-        await api.create('services', serviceData);
+        await api.services.create(serviceData);
       }
-      onSuccess(); // Função da página principal para fechar modal e recarregar dados
+      onSuccess();
     } catch (err) {
       addToast(err.message, 'error');
     }
@@ -54,7 +54,7 @@ const ServiceFormModal = ({ closeModal, establishmentId, onSuccess, initialData 
 
   return (
     <motion.div
-      className={styles.formModalContent}
+      className={styles.modalContent}
       initial={{ y: -50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: -50, opacity: 0 }}
@@ -76,7 +76,6 @@ const ServiceFormModal = ({ closeModal, establishmentId, onSuccess, initialData 
           {errors.price && <p className={styles.errorMessage}>{errors.price.message}</p>}
         </div>
 
-        {/* CORREÇÃO: Alterado de 'duration' para 'duration_minutes' */}
         <div className={styles.inputGroup}>
           <label htmlFor="duration_minutes">Duração (em minutos)</label>
           <input id="duration_minutes" type="number" {...register("duration_minutes")} placeholder="Ex: 60" />

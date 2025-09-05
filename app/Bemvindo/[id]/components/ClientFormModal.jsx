@@ -3,7 +3,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import styles from '../BemVindo.module.css';
-// CORREÇÃO: Importa o objeto 'api' em vez de funções separadas
 import { api } from '../../../../service/api';
 import { useToast } from '../contexts/ToastProvider';
 
@@ -20,11 +19,9 @@ const ClientFormModal = ({ closeModal, establishmentId, onSuccess, initialData }
   const onSubmit = async (formData) => {
     try {
       if (initialData) {
-        // CORREÇÃO: Usa api.update
-        await api.update('clients', initialData.id, formData);
+        await api.clients.update(initialData.id, formData);
       } else {
-        // CORREÇÃO: Usa api.create
-        await api.create('clients', { ...formData, establishment_id: establishmentId });
+        await api.clients.create({ ...formData, establishment_id: establishmentId });
       }
       onSuccess();
     } catch (err) {
@@ -34,7 +31,7 @@ const ClientFormModal = ({ closeModal, establishmentId, onSuccess, initialData }
 
   return (
     <motion.div
-        className={styles.formModalContent}
+        className={styles.modalContent}
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -50, opacity: 0 }}
