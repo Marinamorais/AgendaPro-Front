@@ -1,23 +1,43 @@
 "use client";
-import React, { useState, useMemo } from 'react';
-import { useApi } from '../hooks/useApi';
-import { api } from '../../../../service/api';
-import useDebounce from '../hooks/useDebounce';
-import Table from './Table';
-import styles from '../BemVindo.module.css';
 
 /**
- * Componente para a aba de gerenciamento de Serviços.
- * Recebe as funções de controle (onAdd, onEdit, onDelete) da página pai.
+ * @module components/Servicos
+ * @description Componente para gerenciar a lista de serviços de um estabelecimento.
+ * Exibe os serviços em uma tabela e permite busca, ordenação e ações de CRUD.
+ */
+
+// Core do React e bibliotecas
+import React, { useState, useMemo } from 'react';
+import { FaPlus } from 'react-icons/fa'; // Ícone para o botão de adicionar
+
+// Módulos e Componentes locais
+import styles from '../BemVindo.module.css';
+import { api } from '../../../../service/api';
+import { useApi } from '../hooks/useApi';
+import useDebounce from '../hooks/useDebounce';
+import Table from './Table';
+
+/**
+ * @param {{
+ * establishmentId: number,
+ * onAdd: () => void,
+ * onEdit: (item: object) => void,
+ * onDelete: (item: object) => void,
+ * keyForReRender: number
+ * }} props
  */
 const Servicos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) => {
+  // Estados da UI
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  
+  // Otimização da busca com debounce
+  const debouncedSearchTerm = useDebounce(searchTerm, 350);
 
-  // Busca os serviços na API usando o hook customizado
+  // *** CORREÇÃO APLICADA AQUI ***
+  // A chamada à API foi ajustada para usar a estrutura correta do SDK: `api.services.getAll`.
   const { data: services, loading, error } = useApi(() => 
-    api.get('services', { 
+    api.services.getAll({ 
       establishment_id: establishmentId,
       search: debouncedSearchTerm,
       sortBy: sortConfig.key,
@@ -26,6 +46,7 @@ const Servicos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
     [establishmentId, debouncedSearchTerm, sortConfig, keyForReRender]
   );
 
+  // Função para lidar com a ordenação da tabela
   const handleSort = (key) => {
     setSortConfig(prev => ({
       key,
@@ -33,17 +54,26 @@ const Servicos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
     }));
   };
 
-  // CORREÇÃO: As colunas agora usam 'key' e 'label' para compatibilidade com o componente Table.
-  // Também corrigido 'duration_minutes'.
+  // Memoização das colunas para evitar recriação a cada renderização.
   const columns = useMemo(() => [
     { key: 'name', label: 'Nome' },
-    { key: 'price', label: 'Preço', render: (price) => `R$ ${parseFloat(price || 0).toFixed(2)}` },
-    { key: 'duration_minutes', label: 'Duração', render: (duration) => `${duration || 0} min` },
+    { 
+      key: 'price', 
+      label: 'Preço', 
+      // Função de renderização mais robusta para formatar a moeda.
+      render: (price) => (Number(price) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    },
+    { 
+      key: 'duration_minutes', 
+      label: 'Duração', 
+      render: (duration) => `${duration || 0} min` 
+    },
     { key: 'description', label: 'Descrição' },
   ], []);
 
+  // Exibe uma mensagem de erro clara se a busca falhar.
   if (error) {
-    return <p className={styles.errorState}>{error}</p>;
+    return <p className={styles.errorState}>Ocorreu um erro ao carregar os serviços: {error}</p>;
   }
 
   return (
@@ -55,9 +85,11 @@ const Servicos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
           className={styles.searchInputFull}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          aria-label="Pesquisar serviços"
         />
         <button onClick={onAdd} className={styles.primaryButton}>
-          + Novo Serviço
+          <FaPlus style={{ marginRight: '8px' }} />
+          Novo Serviço
         </button>
       </div>
 
@@ -66,7 +98,7 @@ const Servicos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
         data={services || []}
         loading={loading}
         onEdit={onEdit}
-        onDelete={onDelete} // Passa a função onDelete para a tabela
+        onDelete={onDelete}
         onSort={handleSort}
         sortConfig={sortConfig}
         rowKey="id"

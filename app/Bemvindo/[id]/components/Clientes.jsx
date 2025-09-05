@@ -2,50 +2,42 @@
 
 /**
  * @module components/Clientes
- * @description Componente de gerenciamento completo para a entidade "Clientes".
- * Responsável por:
- * - Exibir a lista de clientes em uma tabela paginada e ordenável.
- * - Fornecer funcionalidades de busca e filtro em tempo real.
- * - Orquestrar a abertura de modais para criação e edição de clientes.
- * - Exibir um painel de detalhes para o cliente selecionado.
- * - Lidar com a lógica de confirmação e exclusão.
- * Este componente é um "container inteligente" que gerencia o estado e passa props para
- * subcomponentes "burros" (de apresentação).
+ * @description Componente de gerenciamento completo para a entidade "Clientes" (CRM).
+ * Orquestra a exibição da lista de clientes, um painel de detalhes, busca e ações de CRUD.
  */
 
-// Importações do Core do React e Next.js
-import React, { useState, useEffect, useMemo } from 'react';
+// Core do React e bibliotecas
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { FaEdit, FaTrash } from 'react-icons/fa'; // Ícones para ações
 
-// Importações de Módulos e Componentes Locais
+// Módulos e Componentes locais
 import styles from '../BemVindo.module.css';
 import { api } from '../../../../service/api';
-// A CORREÇÃO QUE RESOLVE O SEU ERRO ESTÁ AQUI:
-// Importamos `useApi` usando chaves `{}` pois ele agora é uma exportação nomeada.
 import { useApi } from '../hooks/useApi';
 import useDebounce from '../hooks/useDebounce';
-import Table from './Table';
+import Table from './Table'; // Componente de Tabela genérico
 
-// --- Subcomponente para o Histórico de Atendimentos ---
+// --- Subcomponente Otimizado: Histórico de Atendimentos ---
 /**
- * Subcomponente especializado em buscar e renderizar o histórico de agendamentos de um único cliente.
- * @param {{ clientId: string | number, establishmentId: string | number }} props
- * @returns {JSX.Element}
+ * Busca e renderiza o histórico de agendamentos de um cliente.
+ * Utiliza React.memo para evitar re-renderizações desnecessárias.
+ * @param {{ clientId: number, establishmentId: number }} props
  */
-const AppointmentHistory = ({ clientId, establishmentId }) => {
-    // Utiliza o hook `useApi` de forma isolada para buscar apenas os dados de que precisa.
-    // Isso mantém o componente autônomo e fácil de manter.
-    const { data: history, loading } = useApi(() => 
-        api.getAppointments({ establishment_id: establishmentId, client_id: clientId }),
+const AppointmentHistory = memo(({ clientId, establishmentId }) => {
+    // Hook useApi focado em buscar apenas os agendamentos deste cliente.
+    const { data: history, loading, error } = useApi(() => 
+        api.appointments.getAll({ establishment_id: establishmentId, client_id: clientId }),
         [clientId, establishmentId]
     );
 
     if (loading) return <p className={styles.loadingText}>Carregando histórico...</p>;
-    if (!history || history.length === 0) return <p className={styles.emptyText}>Nenhum atendimento anterior encontrado para este cliente.</p>;
+    if (error) return <p className={styles.errorText}>Erro ao buscar histórico.</p>;
+    if (!history || history.length === 0) return <p className={styles.emptyText}>Nenhum atendimento anterior encontrado.</p>;
 
-    // Ordena o histórico para mostrar os agendamentos mais recentes primeiro.
+    // Ordena o histórico para mostrar os mais recentes primeiro.
     const sortedHistory = [...history].sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
 
     return (
@@ -74,17 +66,16 @@ const AppointmentHistory = ({ clientId, establishmentId }) => {
             </table>
         </div>
     );
-};
+});
+AppointmentHistory.displayName = 'AppointmentHistory'; // Nome para o React DevTools
 
-
-// --- Subcomponente para o Painel de Detalhes do Cliente ---
+// --- Subcomponente Otimizado: Painel de Detalhes do Cliente ---
 /**
- * Painel lateral que exibe informações detalhadas de um cliente selecionado.
+ * Painel lateral que exibe informações detalhadas de um cliente.
+ * Otimizado com React.memo.
  * @param {{ cliente: object | null, ... }} props
- * @returns {JSX.Element}
  */
-const ClienteDetailPanel = ({ cliente, establishmentId, onEdit, onDelete, onClose }) => {
-    // Se nenhum cliente estiver selecionado, exibe um placeholder amigável.
+const ClienteDetailPanel = memo(({ cliente, establishmentId, onEdit, onDelete, onClose }) => {
     if (!cliente) {
         return (
             <div className={`${styles.detailPanel} ${styles.placeholder}`}>
@@ -94,27 +85,23 @@ const ClienteDetailPanel = ({ cliente, establishmentId, onEdit, onDelete, onClos
     }
 
     return (
-        // `AnimatePresence` garante que o painel tenha uma animação de saída suave.
-        // O `key` no `motion.div` é crucial para o React e o Framer Motion entenderem que o conteúdo mudou.
         <AnimatePresence>
             <motion.div 
                 className={styles.detailPanel}
-                key={cliente.id}
+                key={cliente.id} // Chave para a animação funcionar na troca de clientes
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }} // Animação de saída para a esquerda
+                exit={{ opacity: 0, x: -20 }}
             >
                 <div className={styles.panelHeader}>
                     <h3>Detalhes do Cliente</h3>
-                    <button onClick={onClose} className={styles.closePanelButton} aria-label="Fechar painel de detalhes">×</button>
+                    <button onClick={onClose} className={styles.closePanelButton} aria-label="Fechar painel">×</button>
                 </div>
                 <div className={styles.panelBody}>
                     <h4>{cliente.full_name}</h4>
                     <p><strong>Email:</strong> {cliente.email || 'Não informado'}</p>
                     <p><strong>Telefone:</strong> {cliente.phone || 'Não informado'}</p>
-                    <p>
-                        <strong>Último Atendimento:</strong> {cliente.last_appointment ? format(parseISO(cliente.last_appointment), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Nenhum'}
-                    </p>
+                    <p><strong>Último Atendimento:</strong> {cliente.last_appointment ? format(parseISO(cliente.last_appointment), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : 'Nenhum'}</p>
                     
                     <div className={styles.kpiGridSmall}>
                         <div className={styles.kpiCardSmall}>
@@ -133,33 +120,33 @@ const ClienteDetailPanel = ({ cliente, establishmentId, onEdit, onDelete, onClos
                     </div>
                 </div>
                 <div className={styles.panelFooter}>
-                    <button className={styles.actionButton} onClick={() => onEdit(cliente)}>Editar</button>
-                    <button className={`${styles.actionButton} ${styles.danger}`} onClick={() => onDelete(cliente)}>Excluir</button>
+                    <button className={styles.actionButton} onClick={() => onEdit(cliente)}> <FaEdit/> Editar</button>
+                    <button className={`${styles.actionButton} ${styles.danger}`} onClick={() => onDelete(cliente)}> <FaTrash/> Excluir</button>
                 </div>
             </motion.div>
         </AnimatePresence>
     );
-};
+});
+ClienteDetailPanel.displayName = 'ClienteDetailPanel';
 
-// --- Componente Principal da Aba Clientes ---
+// --- Componente Principal ---
 /**
- * Orquestrador da aba de Clientes.
- * @param {{ establishmentId: string, onAdd: () => void, ... }} props
- * @returns {JSX.Element}
+ * Componente container que gerencia a aba de Clientes.
+ * @param {{ establishmentId: number, onAdd, onEdit, onDelete, keyForReRender }} props
  */
 const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) => {
-    // Estados para controlar a UI: termo de busca, ordenação da tabela e cliente selecionado.
+    // Estados da UI
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'full_name', direction: 'ascending' });
     const [selectedCliente, setSelectedCliente] = useState(null);
 
-    // Hook `useDebounce` para otimizar a busca, evitando uma chamada de API a cada tecla digitada.
-    const debouncedSearchTerm = useDebounce(searchTerm, 350); // Aumentado para 350ms
+    // Otimização da busca com debounce
+    const debouncedSearchTerm = useDebounce(searchTerm, 350);
 
-    // Hook `useApi` para buscar os dados dos clientes, passando todos os parâmetros de busca e ordenação.
-    // O `keyForReRender` é um "truque" para forçar o hook a buscar os dados novamente após uma operação de CRUD.
+    // *** CORREÇÃO APLICADA AQUI ***
+    // A chamada à API foi ajustada para usar a estrutura correta do SDK: `api.clients.getAll`.
     const { data: clientes, loading, error } = useApi(() => 
-        api.get('clients', { 
+        api.clients.getAll({ 
             establishment_id: establishmentId,
             search: debouncedSearchTerm,
             sortBy: sortConfig.key,
@@ -168,7 +155,7 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
         [establishmentId, debouncedSearchTerm, sortConfig, keyForReRender]
     );
     
-    // Definição das colunas da tabela, memoizada com `useMemo` para evitar recriação a cada renderização.
+    // Memoização das colunas para evitar recriação a cada renderização.
     const columns = useMemo(() => [
         { key: 'full_name', label: 'Cliente' },
         { key: 'last_appointment', label: 'Última Visita', render: (date) => date ? format(parseISO(date), 'dd/MM/yyyy') : 'Nunca' },
@@ -176,7 +163,7 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
         { key: 'avg_ticket', label: 'Ticket Médio', render: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })},
     ], []);
 
-    // Função para atualizar a configuração de ordenação quando o cabeçalho de uma coluna é clicado.
+    // Função para lidar com a ordenação da tabela
     const handleSort = (key) => {
         setSortConfig(prev => ({
             key,
@@ -184,7 +171,7 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
         }));
     };
 
-    // Efeito para garantir que o painel de detalhes seja limpo se o cliente selecionado for excluído da lista.
+    // Efeito para limpar o painel de detalhes se o cliente selecionado for removido da lista.
     useEffect(() => {
         if (selectedCliente && clientes && !clientes.some(c => c.id === selectedCliente.id)) {
             setSelectedCliente(null);
@@ -196,33 +183,33 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
             {/* Painel da Esquerda: Lista de Clientes */}
             <div className={styles.listPanel}>
                  <div className={styles.listHeader}>
-                    <input
-                        type="text"
-                        placeholder="Pesquisar clientes por nome ou email..."
-                        className={styles.searchInputFull}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        aria-label="Campo de busca de clientes"
-                    />
-                    <button className={styles.primaryButton} onClick={onAdd}>+ Novo Cliente</button>
-                </div>
+                     <input
+                         type="text"
+                         placeholder="Pesquisar clientes por nome ou email..."
+                         className={styles.searchInputFull}
+                         value={searchTerm}
+                         onChange={(e) => setSearchTerm(e.target.value)}
+                         aria-label="Campo de busca de clientes"
+                     />
+                     <button className={styles.primaryButton} onClick={onAdd}>+ Novo Cliente</button>
+                 </div>
 
-                {/* Tratamento de estado de erro */}
-                {error && <p className={styles.errorState}>{error}</p>}
-                
-                {/* Componente Tabela para exibir os dados */}
-                <Table
-                    columns={columns}
-                    data={clientes}
-                    loading={loading}
-                    onSort={handleSort}
-                    sortConfig={sortConfig}
-                    onRowClick={setSelectedCliente} // Define o cliente selecionado ao clicar na linha
-                    onEdit={onEdit}   // Propaga a função para o botão de editar na linha da tabela
-                    onDelete={onDelete} // Propaga a função para o botão de deletar na linha da tabela
-                    rowKey="id"
-                    selectedRowId={selectedCliente?.id} // Passa o ID para a tabela destacar a linha selecionada
-                />
+                 {/* Tratamento de estado de erro */}
+                 {error && <p className={styles.errorState}>Ocorreu um erro ao carregar os clientes: {error}</p>}
+                 
+                 {/* Componente de Tabela */}
+                 <Table
+                     columns={columns}
+                     data={clientes}
+                     loading={loading}
+                     onSort={handleSort}
+                     sortConfig={sortConfig}
+                     onRowClick={setSelectedCliente}
+                     onEdit={onEdit}
+                     onDelete={onDelete}
+                     rowKey="id"
+                     selectedRowId={selectedCliente?.id}
+                 />
             </div>
             
             {/* Painel da Direita: Detalhes do Cliente */}
@@ -231,7 +218,7 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
                 establishmentId={establishmentId}
                 onEdit={onEdit} 
                 onDelete={onDelete} 
-                onClose={() => setSelectedCliente(null)} // Função para fechar o painel
+                onClose={() => setSelectedCliente(null)}
             />
         </div>
     );

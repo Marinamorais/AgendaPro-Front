@@ -2,47 +2,41 @@
 
 /**
  * @module components/Produtos
- * @description Componente para gerenciar a lista de produtos de um estabelecimento.
- * Permite visualização, busca, ordenação e disparo de ações de CRUD para produtos.
+ * @description Componente de gerenciamento para a entidade "Produtos".
+ * Orquestra a lista, painel de detalhes, busca e ações de CRUD para produtos.
  */
 
-// Importações de dependências
-import React, { useState, useMemo, useEffect } from 'react';
+// Core do React e bibliotecas
+import React, { useState, useMemo, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
+import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa'; // Ícones
 
-// Importações de Módulos e Componentes Locais
+// Módulos e Componentes locais
 import styles from '../BemVindo.module.css';
 import { api } from '../../../../service/api';
-// CORREÇÃO: Importamos `useApi` usando chaves `{}`.
 import { useApi } from '../hooks/useApi';
 import useDebounce from '../hooks/useDebounce';
 import Table from './Table';
 
-// --- Subcomponente para o Painel de Detalhes do Produto ---
+// --- Subcomponente Otimizado: Painel de Detalhes do Produto ---
 /**
- * Painel lateral que exibe informações detalhadas de um produto selecionado.
- * @param {{
- * product: object | null,
- * onEdit: (item: object) => void,
- * onDelete: (item: object) => void,
- * onClose: () => void
- * }} props
- * @returns {JSX.Element}
+ * Painel lateral que exibe informações detalhadas de um produto.
+ * Otimizado com React.memo.
+ * @param {{ product: object | null, ... }} props
  */
-const ProductDetailPanel = ({ product, onEdit, onDelete, onClose }) => {
-    // Hook para buscar os lotes associados a este produto
-    // A chamada só é feita se `product` existir.
-    const { data: batches, loading: batchesLoading } = useApi(() => 
-        product ? api.get(`products/${product.id}/batches`) : Promise.resolve([]),
+const ProductDetailPanel = memo(({ product, onEdit, onDelete, onClose }) => {
+    // *** CORREÇÃO APLICADA AQUI ***
+    // A chamada foi ajustada para usar um método específico do SDK, como `getBatches(productId)`.
+    const { data: batches, loading: batchesLoading, error: batchesError } = useApi(() => 
+        product ? api.products.getBatches(product.id) : null,
         [product]
     );
 
-    // Renderização de um placeholder se nenhum produto estiver selecionado.
     if (!product) {
         return (
             <div className={`${styles.detailPanel} ${styles.placeholder}`}>
-                <p>Selecione um produto da lista para ver os detalhes.</p>
+                <p>Selecione um produto para ver os detalhes.</p>
             </div>
         );
     }
@@ -58,7 +52,7 @@ const ProductDetailPanel = ({ product, onEdit, onDelete, onClose }) => {
             >
                 <div className={styles.panelHeader}>
                     <h3>Detalhes do Produto</h3>
-                    <button onClick={onClose} className={styles.closePanelButton}>×</button>
+                    <button onClick={onClose} className={styles.closePanelButton} aria-label="Fechar painel">×</button>
                 </div>
                 <div className={styles.panelBody}>
                     <h4>{product.name}</h4>
@@ -68,7 +62,7 @@ const ProductDetailPanel = ({ product, onEdit, onDelete, onClose }) => {
                     <div className={styles.kpiGridSmall}>
                         <div className={styles.kpiCardSmall}>
                             <span>Preço de Venda</span>
-                            <strong>{(product.sale_price || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                            <strong>{(Number(product.sale_price) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
                         </div>
                         <div className={styles.kpiCardSmall}>
                             <span>Em Estoque</span>
@@ -78,8 +72,10 @@ const ProductDetailPanel = ({ product, onEdit, onDelete, onClose }) => {
 
                     <div className={styles.historySection}>
                         <h5>Lotes e Validades</h5>
-                        {batchesLoading ? <p className={styles.loadingText}>Carregando lotes...</p> : (
-                            <ul>
+                        {batchesLoading && <p className={styles.loadingText}>Carregando lotes...</p>}
+                        {batchesError && <p className={styles.errorText}>Erro ao buscar lotes.</p>}
+                        {!batchesLoading && !batchesError && (
+                             <ul className={styles.serviceList}>
                                 {batches && batches.length > 0 ? (
                                     batches.map(batch => (
                                         <li key={batch.id}>
@@ -88,47 +84,40 @@ const ProductDetailPanel = ({ product, onEdit, onDelete, onClose }) => {
                                         </li>
                                     ))
                                 ) : (
-                                    <li className={styles.emptyText}>Nenhum lote cadastrado para este produto.</li>
+                                    <li className={styles.emptyText}>Nenhum lote cadastrado.</li>
                                 )}
                             </ul>
                         )}
                     </div>
                 </div>
                 <div className={styles.panelFooter}>
-                    <button className={styles.actionButton} onClick={() => onEdit(product)}>Editar</button>
-                    <button className={`${styles.actionButton} ${styles.danger}`} onClick={() => onDelete(product)}>Excluir</button>
+                    <button className={styles.actionButton} onClick={() => onEdit(product)}><FaEdit/> Editar</button>
+                    <button className={`${styles.actionButton} ${styles.danger}`} onClick={() => onDelete(product)}><FaTrash/> Excluir</button>
                 </div>
             </motion.div>
         </AnimatePresence>
     );
-};
+});
+ProductDetailPanel.displayName = 'ProductDetailPanel';
 
-
-// --- Componente Principal da Aba Produtos ---
+// --- Componente Principal ---
 /**
- * Orquestrador da aba de Produtos.
- * @param {{
- * establishmentId: string,
- * onAdd: () => void,
- * onEdit: (item: object) => void,
- * onDelete: (item: object) => void,
- * keyForReRender: number
- * }} props
- * @returns {JSX.Element}
+ * Componente container que gerencia a aba de Produtos.
+ * @param {{ establishmentId: number, onAdd, onEdit, onDelete, keyForReRender }} props
  */
 const Produtos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) => {
-    // Estados para controlar a UI
+    // Estados da UI
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
     const [selectedProduct, setSelectedProduct] = useState(null);
 
-    // Debounce para otimizar a busca
+    // Otimização da busca com debounce
     const debouncedSearchTerm = useDebounce(searchTerm, 350);
 
-    // Hook `useApi` para buscar os produtos.
-    // A importação correta (`import { useApi }`) garante que isso funcione.
+    // *** CORREÇÃO APLICADA AQUI ***
+    // A chamada à API foi ajustada para usar `api.products.getAll`.
     const { data: products, loading, error } = useApi(() => 
-        api.get('products', { 
+        api.products.getAll({ 
             establishment_id: establishmentId,
             search: debouncedSearchTerm,
             sortBy: sortConfig.key,
@@ -137,11 +126,18 @@ const Produtos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
         [establishmentId, debouncedSearchTerm, sortConfig, keyForReRender]
     );
     
-    // Definição das colunas da tabela, memoizada para performance.
+    // Efeito para limpar o painel de detalhes se o produto for removido da lista.
+    useEffect(() => {
+        if (selectedProduct && products && !products.some(p => p.id === selectedProduct.id)) {
+            setSelectedProduct(null);
+        }
+    }, [products, selectedProduct]);
+    
+    // Memoização das colunas da tabela para performance.
     const columns = useMemo(() => [
         { key: 'name', label: 'Produto' },
         { key: 'sku', label: 'SKU' },
-        { key: 'sale_price', label: 'Preço', render: (value) => (value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
+        { key: 'sale_price', label: 'Preço', render: (value) => (Number(value) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) },
         { key: 'stock_level', label: 'Estoque', render: (value) => `${value || 0} un.` },
     ], []);
 
@@ -152,31 +148,27 @@ const Produtos = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
             direction: prev.key === key && prev.direction === 'ascending' ? 'descending' : 'ascending'
         }));
     };
-    
-    // Efeito para limpar o painel de detalhes se o produto selecionado for deletado.
-    useEffect(() => {
-        if (selectedProduct && products && !products.some(p => p.id === selectedProduct.id)) {
-            setSelectedProduct(null);
-        }
-    }, [products, selectedProduct]);
 
     return (
         <div className={styles.crmContainer}>
-            {/* Painel da Esquerda: Lista */}
+            {/* Painel da Esquerda: Lista de Produtos */}
             <div className={styles.listPanel}>
-                 <div className={styles.listHeader}>
+                <div className={styles.listHeader}>
                     <input
                         type="text"
                         placeholder="Pesquisar produtos por nome ou SKU..."
                         className={styles.searchInputFull}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        aria-label="Campo de busca de produtos"
+                        aria-label="Pesquisar produtos"
                     />
-                    <button className={styles.primaryButton} onClick={onAdd}>+ Novo Produto</button>
+                    <button className={styles.primaryButton} onClick={onAdd}>
+                        <FaPlus style={{ marginRight: '8px' }}/>
+                        Novo Produto
+                    </button>
                 </div>
 
-                {error && <p className={styles.errorState}>{error}</p>}
+                {error && <p className={styles.errorState}>Ocorreu um erro ao carregar os produtos: {error}</p>}
                 
                 <Table
                     columns={columns}
