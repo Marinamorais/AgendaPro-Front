@@ -407,3 +407,216 @@
 }
 
 /* ... outros estilos ... */
+
+/* --- Layout Principal da Agenda --- */
+.agendaContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #1a202c;
+}
+
+.mainContent {
+    flex-grow: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px 24px;
+}
+
+/* --- Cabeçalho da Agenda (AgendaHeader) --- */
+.agendaHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+.headerTitle h1 { font-size: 1.75rem; font-weight: 700; margin: 0; }
+.currentMonth { font-size: 1.1rem; color: #718096; text-transform: capitalize; }
+.headerControls { display: flex; gap: 12px; }
+.navButton, .todayButton {
+    padding: 8px 16px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.navButton:hover { background-color: #f7fafc; }
+.todayButton { background-color: #00C49F; color: #fff; border-color: #00C49F; }
+.todayButton:hover { background-color: #00a883; border-color: #00a883; }
+
+/* --- Grade de Horários (TimeGrid) --- */
+.timeGridContainer {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+}
+.timeColumn {
+    padding-top: 60px;
+    background-color: #fdfdff;
+    border-right: 1px solid #e2e8f0;
+}
+.timeSlotLabel {
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #a0aec0;
+}
+.gridContent {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    overflow-y: auto;
+}
+.dayColumn { border-left: 1px solid #e2e8f0; }
+.dayColumn:first-child { border-left: none; }
+.dayHeader {
+    text-align: center;
+    padding: 12px 0;
+    position: sticky; top: 0;
+    background-color: #ffffff; z-index: 10;
+    border-bottom: 1px solid #e2e8f0;
+}
+.dayName { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: #718096; }
+.dayNumber { font-size: 1.5rem; font-weight: 500; color: #2d3748; }
+.timeSlot {
+    height: 60px;
+    border-top: 1px dashed #e2e8f0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    position: relative;
+    padding: 2px;
+}
+.timeSlot:hover { background-color: #ebf8ff; }
+
+/* --- Bloco de Agendamento --- */
+.appointmentBlock {
+  padding: 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.8rem;
+  overflow: hidden;
+  position: relative;
+  height: 100%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+.appointmentBlock:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+.appointmentClient { font-weight: 600; display: block; }
+.appointmentService { font-size: 0.75rem; opacity: 0.9; }
+
+/* --- Cores de Status --- */
+.statusAgendado { background-color: #3b82f6; }
+.statusConfirmado { background-color: #8b5cf6; }
+.statusFinalizado { background-color: #10b981; }
+.statusCancelado { background-color: #ef4444; opacity: 0.8; }
+
+/* --- MODAL V2 (NOVO E MELHORADO) --- */
+.modalOverlay {
+    position: fixed; inset: 0;
+    background-color: rgba(17, 24, 39, 0.6);
+    display: grid; place-items: center; z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+.modalContentV2 {
+    background: #fff; padding: 0; border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+    width: 90%; max-width: 500px;
+    position: relative;
+    display: flex; flex-direction: column;
+}
+.modalHeaderV2 { padding: 1.5rem; border-bottom: 1px solid #e2e8f0; position: relative; }
+.modalTitleV2 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+.modalSubtitleV2 { font-size: 1rem; color: #718096; margin: 4px 0 0; }
+.closeButtonV2 {
+    position: absolute; top: 1rem; right: 1rem;
+    background: #f1f5f9; border: none; border-radius: 50%;
+    width: 32px; height: 32px; font-size: 1.2rem;
+    cursor: pointer; display: grid; place-items: center; color: #718096;
+}
+.modalForm { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+.formGroupV2 { display: flex; flex-direction: column; gap: 0.5rem; }
+.formGroupV2 label { font-weight: 600; color: #4a5568; display: flex; align-items: center; gap: 8px; }
+.formInputV2, .formSelectV2 {
+    width: 100%; padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e0; border-radius: 8px;
+    font-size: 1rem; transition: all 0.2s;
+}
+.formInputV2:focus, .formSelectV2:focus {
+    outline: none; border-color: #00C49F;
+    box-shadow: 0 0 0 3px rgba(0, 196, 159, 0.2);
+}
+.modalActionsV2 {
+    display: flex; justify-content: flex-end; gap: 0.75rem;
+    padding: 1.5rem; border-top: 1px solid #e2e8f0; background-color: #f8fafc;
+    border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+}
+.modalButtonV2 {
+    padding: 0.75rem 1.5rem; border-radius: 8px;
+    border: none; cursor: pointer; font-weight: 600; font-size: 1rem;
+    transition: all 0.2s;
+}
+.modalButtonV2.primary { background-color: #00C49F; color: white; }
+.modalButtonV2.primary:hover { background-color: #00a883; }
+.modalButtonV2.secondary { background-color: #e2e8f0; color: #4a5568; }
+.modalButtonV2.secondary:hover { background-color: #cbd5e0; }
+
+/* --- BUSCA DE CLIENTES (NOVO) --- */
+.searchContainer { position: relative; }
+.searchIcon { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #a0aec0; }
+.searchContainer .formInputV2 { padding-left: 2.5rem; }
+.suggestionsList {
+    list-style: none; padding: 0.5rem 0; margin: 4px 0 0;
+    background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    position: absolute; width: 100%; z-index: 10; max-height: 150px; overflow-y: auto;
+}
+.suggestionsList li {
+    padding: 0.75rem 1rem; cursor: pointer;
+}
+.suggestionsList li:hover { background-color: #f7fafc; }
+
+/* --- Modal de Detalhes (Ajustes) --- */
+.detailList { display: flex; flex-direction: column; gap: 12px; margin-top: 1rem; }
+.detailItem { display: flex; align-items: center; gap: 10px; font-size: 1rem; }
+.statusBadge {
+  padding: 4px 10px; border-radius: 99px; font-size: 0.8rem; font-weight: 600;
+  color: #fff;
+}
+.agendado { background-color: #3b82f6; }
+.confirmado { background-color: #8b5cf6; }
+.finalizado { background-color: #10b981; }
+.cancelado { background-color: #ef4444; }
+
+/* Botões de Ação no Modal de Detalhes */
+.modalActions { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.confirmButton, .rescheduleButton, .cancelButton, .finishButton {
+  padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: 1px solid transparent;
+}
+.confirmButton { background-color: #10b981; color: #fff; }
+.finishButton { background-color: #8b5cf6; color: #fff; }
+.rescheduleButton { background-color: #f0f0f0; border-color: #ccc; }
+.cancelButton { background-color: #ef4444; color: #fff; }
+
+/* --- Estados Gerais --- */
+.centered { display: grid; place-items: center; height: 100%; font-size: 1.2rem; color: #718096; }
+.centeredError {
+    display: flex; justify-content: center; align-items: center;
+    height: 100%; font-size: 1.2rem; background-color: #fee2e2;
+    color: #991b1b; padding: 20px; border-radius: 8px;
+}

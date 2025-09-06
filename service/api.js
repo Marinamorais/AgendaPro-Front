@@ -1,6 +1,6 @@
 /**
  * @module service/api
- * @version 5.0 (Definitivo)
+ * @version 6.0 (Definitivo)
  * @description SDK completo e autossuficiente para a API AgendaPro.
  * Esta é a única camada de comunicação necessária para toda a aplicação.
  */
@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 
 // --- CONFIGURAÇÃO CENTRAL DA INSTÂNCIA AXIOS ---
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://agendapro-back.vercel.app',
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
@@ -39,7 +39,7 @@ apiClient.interceptors.response.use(
   }
 );
 
-// --- CACHE INTELIGENTE COM TTL ---
+// --- CACHE INTELIGENTE COM TTL (Time-To-Live) ---
 const cache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
@@ -133,16 +133,21 @@ export const api = {
       if (!appointments || appointments.length === 0) return [];
       const establishmentId = params.establishment_id;
       if (!establishmentId) throw new Error("establishment_id é necessário para hidratar os dados.");
+
       const [clientsResult, servicesResult] = await Promise.allSettled([
         api.clients.getAll({ establishment_id: establishmentId }),
         api.services.getAll({ establishment_id: establishmentId })
       ]);
+
       const allClients = clientsResult.status === 'fulfilled' ? clientsResult.value : [];
       const allServices = servicesResult.status === 'fulfilled' ? servicesResult.value : [];
+
       if (clientsResult.status === 'rejected') console.error("Falha ao buscar clientes:", clientsResult.reason);
       if (servicesResult.status === 'rejected') console.error("Falha ao buscar serviços:", servicesResult.reason);
+
       const clientsMap = new Map(allClients.map(c => [c.id, c]));
       const servicesMap = new Map(allServices.map(s => [s.id, s]));
+
       return appointments.map(app => ({
         ...app,
         client: clientsMap.get(app.client_id) || { id: app.client_id, full_name: 'Cliente Removido' },
@@ -167,52 +172,6 @@ export const api = {
   dashboard: {
     getData: async (establishmentId, period = 'monthly') => {
       if (!establishmentId) throw new Error("ID do Estabelecimento é obrigatório.");
-      const now = new Date();
-      let startDate;
-      if (period === 'daily') startDate = new Date(now.setHours(0, 0, 0, 0));
-      else if (period === 'weekly') startDate = new Date(new Date().setDate(now.getDate() - 7));
-      else startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      
-      const params = {
-          establishment_id: establishmentId,
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(new Date(), 'yyyy-MM-dd')
-      };
-
-      try {
-        const [sales, appointments, clients, professionals] = await Promise.all([
-          api.sales.getAll(params),
-          api.appointments.getAll(params),
-          api.clients.getAll({ establishment_id: establishmentId }),
-          api.professionals.getAll({ establishment_id: establishmentId })
-        ]);
-
-        const totalRevenue = sales.reduce((sum, sale) => sum + parseFloat(sale.final_amount || 0), 0);
-        
-        return {
-          kpis: {
-            totalRevenue: totalRevenue,
-            totalAppointments: appointments.length,
-          },
-          charts: { /* dados para gráficos */ },
-          tables: {
-            upcomingAppointments: appointments.filter(a => new Date(a.start_time) > new Date()).slice(0,5)
-          }
-        };
-      } catch (error) {
-        throw new Error(`Não foi possível carregar os dados do dashboard: ${error.message}`);
-      }
-    }
-  }
-};
-
-// marinamorais/agendapro-front/AgendaPro-Front-e89f19b6f1c85c2718d910d6f3e87d7772852553/service/api.js
-
-// ... (todo o resto do seu api.js)
-
-  dashboard: {
-    getData: async (establishmentId, period = 'monthly') => {
-      if (!establishmentId) throw new Error("ID do Estabelecimento é obrigatório.");
       
       const now = new Date();
       let startDate;
@@ -232,7 +191,6 @@ export const api = {
       };
 
       try {
-        // Buscas paralelas para máxima performance
         const [sales, appointments, clients, professionals, services] = await Promise.all([
           api.sales.getAll(params),
           api.appointments.getAll(params),
@@ -241,12 +199,9 @@ export const api = {
           api.services.getAll({ establishment_id: establishmentId })
         ]);
 
-        // Processamento e agregação dos dados
         const totalRevenue = sales.reduce((sum, sale) => sum + parseFloat(sale.final_amount || 0), 0);
         const totalAppointments = appointments.length;
         const avgTicket = totalAppointments > 0 ? totalRevenue / totalAppointments : 0;
-
-        // ... (aqui entraria uma lógica mais complexa para os outros KPIs e gráficos)
 
         return {
           kpis: {
@@ -257,9 +212,10 @@ export const api = {
           },
           charts: {
             revenue: sales.map(s => ({ name: new Date(s.transaction_date).toLocaleDateString(), Receita: s.final_amount })),
-            appointments: appointments.map(a => ({ name: new Date(a.start_time).toLocaleDateString(), agendamentos: 1 })), // Simplificado
+            appointments: appointments.map(a => ({ name: new Date(a.start_time).toLocaleDateString(), agendamentos: 1 })),
           },
           tables: {
+            upcomingAppointments: appointments.filter(a => new Date(a.start_time) > new Date()).slice(0, 5),
             services: services.slice(0, 5).map(s => ({ ...s, count: Math.floor(Math.random() * 50) })), // Dados mocados
             clientsAtRisk: clients.slice(0, 3).map(c => ({...c, last_appointment: new Date()})), // Dados mocados
             professionalsLeaderboard: professionals.slice(0, 5).map(p => ({ ...p, total_revenue: Math.floor(Math.random() * 5000) })), // Dados mocados
@@ -274,4 +230,4 @@ export const api = {
       }
     }
   }
-// ... (resto do seu api.js)
+};

@@ -1,89 +1,70 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { format, parse } from 'date-fns';
-import { api } from '../../../../../service/api';
-import { useToast } from '../../contexts/ToastProvider';
+import { format, parseISO } from 'date-fns';
+import { FaUser, FaSearch, FaTools } from 'react-icons/fa';
 import styles from '../Agenda.module.css';
-
-// Schema de validação Zod: Um contrato que os dados DEVEM seguir.
-const appointmentSchema = z.object({
-  client_id: z.string().uuid("Por favor, selecione um cliente válido."),
-  service_id: z.string().uuid("Por favor, selecione um serviço válido."),
-  notes: z.string().optional(),
-});
 
 /**
  * Modal para criar um novo agendamento.
- * Blindado, robusto e com validação de dados de nível supremo.
+ * Com busca de clientes e UI aprimorada.
  */
-const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professionalId }) => {
-  const { addToast } = useToast();
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(appointmentSchema),
-  });
+export default function NewAppointmentModal({
+  slot,
+  onClose,
+  onSave,
+  establishmentId,
+  professionalId,
+  clients = [],
+  services = [],
+  isLoading
+}) {
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [selectedServiceId, setSelectedServiceId] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [showClientList, setShowClientList] = useState(false);
 
-  const [clients, setClients] = useState([]);
-  const [services, setServices] = useState([]);
-  const [loadingDependencies, setLoadingDependencies] = useState(true);
+  // Filtra os clientes em tempo real conforme o usuário digita
+  const filteredClients = useMemo(() => {
+    if (!searchTerm) return [];
+    return clients.filter(client =>
+      client.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 5); // Limita a 5 resultados para melhor performance
+  }, [searchTerm, clients]);
 
-  // Busca clientes e serviços de forma segura quando o modal é aberto.
-  useEffect(() => {
-    const fetchDependencies = async () => {
-      setLoadingDependencies(true);
-      try {
-        const [clientsData, servicesData] = await Promise.all([
-          api.get('clients', { establishment_id: establishmentId }),
-          api.get('services', { establishment_id: establishmentId })
-        ]);
-        setClients(clientsData || []);
-        setServices(servicesData || []);
-      } catch (error) {
-        addToast("Erro fatal: Não foi possível carregar clientes e serviços.", 'error');
-        onClose(); // Fecha o modal se os dados essenciais não puderem ser carregados
-      } finally {
-        setLoadingDependencies(false);
-      }
-    };
-    fetchDependencies();
-  }, [establishmentId, addToast, onClose]);
+  const handleSelectClient = (client) => {
+    setSelectedClient(client);
+    setSearchTerm(client.full_name);
+    setShowClientList(false);
+  };
 
-  const onSubmit = async (formData) => {
-    // Validação extra para garantir que o slot de horário é válido.
-    if (!slot?.date || !slot.time) {
-      addToast("Erro: Dados de horário inválidos.", "error");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedClient || !selectedServiceId) {
+      alert('Por favor, selecione um cliente e um serviço.');
       return;
     }
+    setIsSaving(true);
+    
+    // O backend espera o start_time como um objeto Date ou string ISO
+    const startTime = parseISO(`${format(slot.date, 'yyyy-MM-dd')}T${slot.time}:00`);
 
-    // Combina data e hora para criar um objeto Date e depois o formato ISO 8601.
-    const startTime = parse(
-      `${format(slot.date, 'yyyy-MM-dd')} ${slot.time}`, 
-      'yyyy-MM-dd HH:mm', 
-      new Date()
-    );
-
-    // --- A CORREÇÃO SUPREMA ---
-    // Construção do payload sem parseInt, garantindo que os UUIDs sejam strings.
-    // Apenas os campos esperados pela API são enviados.
     const payload = {
-      client_id: formData.client_id,
-      service_id: formData.service_id,
-      notes: formData.notes,
-      professional_id: professionalId,
       establishment_id: establishmentId,
+      professional_id: professionalId,
+      client_id: selectedClient.id,
+      service_id: selectedServiceId,
       start_time: startTime.toISOString(),
-      // O backend cuidará do status, end_time e duration.
+      status: 'Agendado',
     };
 
     try {
-      await onSave(payload); // Chama a função da página pai, que tem o try/catch
-    } catch (err) {
-      // O erro já é exibido pelo toast na página pai.
-      // O 'catch' aqui impede o modal de fechar em caso de falha.
-      console.error("Falha ao salvar agendamento:", err);
+      await onSave(payload);
+    } catch (error) {
+      // O erro já é tratado na página principal
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -92,50 +73,77 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <motion.div
-        className={styles.modalContent}
+        className={styles.modalContentV2}
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -50, opacity: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Novo Agendamento</h2>
-          <button onClick={onClose} className={styles.closeButton}>×</button>
+        <div className={styles.modalHeaderV2}>
+          <h2 className={styles.modalTitleV2}>Novo Agendamento</h2>
+          <p className={styles.modalSubtitleV2}>
+            Para <strong>{format(slot.date, 'dd/MM/yyyy')}</strong> às <strong>{slot.time}</strong>
+          </p>
+          <button onClick={onClose} className={styles.closeButtonV2}>×</button>
         </div>
-        <p className={styles.modalSubtitle}>
-          Para: <strong>{format(slot.date, 'dd/MM/yyyy')}</strong> às <strong>{slot.time}</strong>
-        </p>
         
-        {loadingDependencies ? <p>Carregando dados...</p> : (
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className={styles.formGroup}>
-              <label htmlFor="client_id">Cliente</label>
-              <select id="client_id" {...register("client_id")} className={errors.client_id ? styles.inputError : styles.formSelect}>
-                <option value="">Selecione um cliente...</option>
-                {clients.map(c => <option key={c.id} value={c.id}>{c.full_name}</option>)}
+        {isLoading ? <div className={styles.centered}>Carregando...</div> : (
+          <form onSubmit={handleSubmit} className={styles.modalForm}>
+            <div className={styles.formGroupV2}>
+              <label htmlFor="client_search"><FaUser /> Cliente</label>
+              <div className={styles.searchContainer}>
+                <FaSearch className={styles.searchIcon} />
+                <input
+                  id="client_search"
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setSelectedClient(null); // Limpa o cliente selecionado ao digitar
+                    setShowClientList(true);
+                  }}
+                  onFocus={() => setShowClientList(true)}
+                  placeholder="Digite para buscar..."
+                  autoComplete="off"
+                  className={styles.formInputV2}
+                />
+                {showClientList && filteredClients.length > 0 && (
+                  <ul className={styles.suggestionsList}>
+                    {filteredClients.map(client => (
+                      <li key={client.id} onMouseDown={() => handleSelectClient(client)}>
+                        {client.full_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.formGroupV2}>
+              <label htmlFor="service_id"><FaTools /> Serviço</label>
+              <select
+                id="service_id"
+                value={selectedServiceId}
+                onChange={(e) => setSelectedServiceId(e.target.value)}
+                required
+                className={styles.formSelectV2}
+              >
+                <option value="" disabled>Selecione um serviço</option>
+                {services.map(service => (
+                  <option key={service.id} value={service.id}>
+                    {service.name} - R$ {service.price}
+                  </option>
+                ))}
               </select>
-              {errors.client_id && <p className={styles.errorMessage}>{errors.client_id.message}</p>}
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="service_id">Serviço</label>
-              <select id="service_id" {...register("service_id")} className={errors.service_id ? styles.inputError : styles.formSelect}>
-                <option value="">Selecione um serviço...</option>
-                {services.map(s => <option key={s.id} value={s.id}>{s.name} - R$ {s.price}</option>)}
-              </select>
-              {errors.service_id && <p className={styles.errorMessage}>{errors.service_id.message}</p>}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="notes">Observações</label>
-              <textarea id="notes" {...register("notes")} rows="3" className={styles.formInput} />
-            </div>
-
-            <div className={styles.modalActions}>
-              <button type="button" onClick={onClose} className={styles.secondaryButton}>Cancelar</button>
-              <button type="submit" className={styles.primaryButton} disabled={isSubmitting}>
-                {isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}
+            <div className={styles.modalActionsV2}>
+              <button type="button" onClick={onClose} className={`${styles.modalButtonV2} ${styles.secondary}`} disabled={isSaving}>
+                Cancelar
+              </button>
+              <button type="submit" className={`${styles.modalButtonV2} ${styles.primary}`} disabled={isSaving}>
+                {isSaving ? 'Salvando...' : 'Salvar Agendamento'}
               </button>
             </div>
           </form>
@@ -143,6 +151,4 @@ const NewAppointmentModal = ({ slot, onClose, onSave, establishmentId, professio
       </motion.div>
     </div>
   );
-};
-
-export default NewAppointmentModal;
+}

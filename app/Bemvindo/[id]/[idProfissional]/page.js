@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { useAgenda } from './hooks/useAgenda';
@@ -13,56 +13,70 @@ import NewAppointmentModal from './components/NewAppointmentModal';
 import AppointmentDetailModal from './components/AppointmentDetailModal';
 import styles from './Agenda.module.css';
 
-/**
- * Página principal da Agenda. Atua como o "Controlador Supremo".
- * Orquestra o estado, as chamadas de API e a renderização dos componentes.
- */
 export default function AgendaProfissionalPage() {
   const params = useParams();
   const { addToast } = useToast();
   const establishmentId = params.id;
   const professionalId = params.idProfissional;
 
-  // O hook agora é a nossa "Fonte da Verdade" para os dados da agenda.
-  const { 
-    currentDate, 
-    appointments, 
-    professionalName, 
-    loading, 
-    error, 
-    changeWeek, 
-    goToToday, 
-    refreshAgenda // A função chave para a reatividade.
+  const {
+    currentDate,
+    appointments,
+    professionalName,
+    loading: agendaLoading,
+    error: agendaError,
+    changeWeek,
+    goToToday,
+    refreshAgenda
   } = useAgenda(establishmentId, professionalId);
-  
-  // Estados para controlar a visibilidade e os dados dos modais.
+
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // --- LÓGICA DE API CENTRALIZADA ---
+  // Estados para carregar dependências (clientes e serviços)
+  const [clients, setClients] = useState([]);
+  const [services, setServices] = useState([]);
+  const [dependenciesLoading, setDependenciesLoading] = useState(true);
 
-  /**
-   * Função suprema para criar um novo agendamento.
-   * É passada para o modal, que apenas a executa com os dados do formulário.
-   */
+  // Busca os dados necessários para o modal de agendamento
+  const fetchDependencies = useCallback(async () => {
+    if (!establishmentId) return;
+    setDependenciesLoading(true);
+    try {
+      const [clientsData, servicesData] = await Promise.all([
+        api.clients.getAll({ establishment_id: establishmentId }),
+        api.services.getAll({ establishment_id: establishmentId })
+      ]);
+      setClients(clientsData || []);
+      setServices(servicesData || []);
+    } catch (err) {
+      addToast(`Erro ao carregar clientes e serviços: ${err.message}`, 'error');
+    } finally {
+      setDependenciesLoading(false);
+    }
+  }, [establishmentId, addToast]);
+
+  useEffect(() => {
+    fetchDependencies();
+  }, [fetchDependencies]);
+
   const handleCreateAppointment = useCallback(async (payload) => {
     try {
-      await api.create('appointments', payload);
+      // CORREÇÃO: Usando o método correto 'api.appointments.create'
+      await api.appointments.create(payload);
       addToast('Agendamento criado com sucesso!', 'success');
-      
-      // A CORREÇÃO DEFINITIVA: Após o sucesso, comanda a atualização da agenda.
-      refreshAgenda(); 
-      
-      setSelectedSlot(null); // Fecha o modal
+      refreshAgenda();
+      setSelectedSlot(null);
     } catch (err) {
       addToast(`Erro ao criar agendamento: ${err.message}`, 'error');
-      throw err; // Lança o erro para o modal saber que a operação falhou.
+      throw err;
     }
   }, [addToast, refreshAgenda]);
 
   const handleUpdateStatus = useCallback(async (appointmentId, newStatus) => {
     try {
-      await api.update('appointments', appointmentId, { status: newStatus });
+       // CORREÇÃO: Usando o método correto 'api.appointments.update' e a rota de status
+      await api.appointments.update(`${appointmentId}/status`, { status: newStatus });
       addToast('Status atualizado com sucesso!', 'success');
       refreshAgenda();
       setSelectedAppointment(null);
@@ -74,12 +88,12 @@ export default function AgendaProfissionalPage() {
   const onDragEnd = (result) => {
     if (!result.destination) return;
     addToast('Funcionalidade de arrastar e soltar em desenvolvimento.', 'info');
-    // Futura lógica de API para salvar a alteração viria aqui.
-    // Ex: handleUpdateAppointmentTime(result.draggableId, result.destination.droppableId);
   };
+  
+  const isLoading = agendaLoading || dependenciesLoading;
 
-  if (loading) return <div className={styles.centered}>Carregando agenda...</div>;
-  if (error) return <div className={styles.centeredError}>{error}</div>;
+  if (isLoading) return <div className={styles.centered}>Carregando agenda...</div>;
+  if (agendaError) return <div className={styles.centeredError}>{agendaError}</div>;
 
   return (
     <div className={styles.agendaContainer}>
@@ -90,7 +104,7 @@ export default function AgendaProfissionalPage() {
         onPrevWeek={() => changeWeek('prev')}
         onToday={goToToday}
       />
-      
+
       <main className={styles.mainContent}>
         <DragDropContext onDragEnd={onDragEnd}>
           <TimeGrid
@@ -102,22 +116,25 @@ export default function AgendaProfissionalPage() {
         </DragDropContext>
       </main>
 
-      {/* O modal só é renderizado quando um slot é selecionado */}
       {selectedSlot && (
         <NewAppointmentModal
           slot={selectedSlot}
           onClose={() => setSelectedSlot(null)}
-          onSave={handleCreateAppointment} // Passa a função de salvar, centralizada aqui.
+          onSave={handleCreateAppointment}
           establishmentId={establishmentId}
           professionalId={professionalId}
+          clients={clients}
+          services={services}
+          isLoading={dependenciesLoading}
         />
       )}
-      
+
       {selectedAppointment && (
         <AppointmentDetailModal
           appointment={selectedAppointment}
           onClose={() => setSelectedAppointment(null)}
-          onStatusChange={handleUpdateStatus}
+          onUpdateStatus={(newStatus) => handleUpdateStatus(selectedAppointment.id, newStatus)}
+          onReschedule={() => addToast('Funcionalidade de reagendamento em desenvolvimento.', 'info')}
         />
       )}
     </div>
