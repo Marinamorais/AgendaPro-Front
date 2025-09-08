@@ -5,6 +5,7 @@ import HeaderComponent from "./components/HeaderComponent/page";
 import FooterComponent from "./components/FooterComponent/page";
 import { AnimatePresence, motion } from "framer-motion";
 import AuthModal from "./components/AuthModal/page"; // Importa o novo modal
+import Background from "./components/Background/page";
 
 export default function Home() {
   // Estado para controlar qual modal está aberto: 'login', 'register' ou null
@@ -66,6 +67,7 @@ export default function Home() {
 
   return (
     <main>
+      <Background />
       {/* O Modal de Autenticação, renderizado condicionalmente */}
       <AnimatePresence>
         {authMode && (
@@ -85,12 +87,12 @@ export default function Home() {
 
         {/* Hero */}
         <header className={styles.hero}>
-          <h1>Transforme sua Agenda em uma Máquina de Lucro 💰</h1>
-          <p>OiAgendaPro é o copiloto inteligente que preenche sua agenda, fideliza seus clientes e aumenta seu faturamento — tudo no automático.</p>
+          <h1>Transforme sua Agenda em uma Máquina de Lucro </h1>
+          <p>OiAgendaPro é o copiloto inteligente que preenche sua agenda, fideliza seus clientes e aumenta seu faturamento — <span className={styles.destaque}>tudo no automático.</span></p>
           <button className={styles.ctaButton} onClick={() => openAuthModal('register')}>
             Comece seu teste grátis
           </button>
-          <span className={styles.ctaInfo}>14 dias grátis • Sem cartão • Cancele quando quiser</span>
+          <span className={styles.ctaInfo}> ⚡14 dias grátis • Sem cartão • Cancele quando quiser</span>
         </header>
 
         {/* Cards */}

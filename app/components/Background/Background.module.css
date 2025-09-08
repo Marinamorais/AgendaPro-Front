@@ -1,0 +1,59 @@
+.background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  z-index: -1; /* Fica atrás do conteúdo */
+  background: #0f172a; /* Cor de fundo escura */
+}
+
+/* Fundo quadriculado */
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: 0.20;
+}
+
+/* Estrelas */
+.stars {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 3px;
+  background: rgb(11, 143, 204);
+  border-radius: 50%;
+  opacity: 0; /* começa invisível */
+  animation: floatUp 12s linear infinite, twinkle 4s ease-in-out infinite;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0);
+    opacity: 0;  /* começa invisível */
+  }
+  20% {
+    opacity: 0.9;  /* aparece suavemente */
+  }
+  50% {
+    opacity: 0.2;  /* visível até o meio da tela */
+  }
+  100% {
+    transform: translateY(-110vh);
+    opacity: 0;  /* some depois do meio */
+  }
+}
+
+/* Animação de brilho */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}

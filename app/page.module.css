@@ -4,7 +4,6 @@
 .container {
   font-family: "Inter", sans-serif;
   color: var(--color-text);
-  background: var(--color-neutral-white);
   display: flex;
   flex-direction: column;
   gap: 4rem;
@@ -17,26 +16,38 @@
 .hero {
   text-align: center;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, var(--color-primary-dark), #3b475f);
+  background: none; /* ou uma cor sólida, ex: #10141d */
   color: var(--color-neutral-white);
-  border-radius: 2rem;
-  box-shadow: 0 10px 30px rgba(42, 51, 66, 0.4);
+  /* border-radius: 2rem; */  /* removido */
+  /* box-shadow: 0 10px 30px rgba(42, 51, 66, 0.4); */ /* removido */
 }
 
 .hero h1 {
-  font-size: 2.8rem;
-  font-weight: 800;
+  font-size: 2.6rem;
+  font-weight: 700;
   margin-bottom: 1rem;
+  background: linear-gradient(90deg, #88b7e1, #00C49F 70%, #357bed 90%, #00C49F 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero p {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   opacity: 0.9;
   margin-bottom: 2rem;
+  line-height: 1.5;
+}
+
+.destaque {
+  color: #09d9e0;
+  font-weight: bold;
+  text-shadow: 0 0 7px #021b30, 0 0 16px #0ddce7;
 }
 
 .ctaButton {
-  background: var(--color-primary-accent);
+  background: linear-gradient(90deg, #00C49F 0%, #357bed 100%);
   color: var(--color-neutral-white);
   font-weight: bold;
   padding: 1rem 2rem;
@@ -46,6 +57,13 @@
   border: none;
   transition: 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 196, 159, 0.4);
+}
+
+.span {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-top: 1rem;
+  display: block;
 }
 
 .ctaButton:hover {
