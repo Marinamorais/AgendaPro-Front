@@ -31,10 +31,10 @@ export default function Home() {
   // DADOS DA LANDING PAGE
   // ------------------------
   const cards = [
-    { icon: "🤖", title: "IA que Trabalha por Você", description: "Agendamento automático via WhatsApp, lembretes e reativações sem que você precise mover um dedo." },
-    { icon: "📈", title: "Mais Faturamento, Menos Stress", description: "Preencha horários ociosos com precificação dinâmica e insights preditivos para evitar cancelamentos." },
-    { icon: "💎", title: "Clientes VIP de Verdade", description: "Identifique seus melhores clientes, crie campanhas automáticas e aumente a fidelidade com gamificação." },
-    { icon: "🛡️", title: "Privacidade & Segurança", description: "LGPD pronta e criptografia nível bancário. Seus dados e os de suas clientes estão sempre protegidos." },
+  { icon: "🤖", title: "IA que Trabalha por Você", description: "Agendamento automático via WhatsApp, lembretes e reativações sem que você precise mover um dedo.", iconColor: "linear-gradient(135deg, #ff6a9c 0%, #ffb86c 100%)", cardColor: "linear-gradient(135deg, #ff6a9c22 0%, #ffb86c22 100%)" },
+  { icon: "📈", title: "Mais Faturamento, Menos Stress", description: "Preencha horários ociosos com precificação dinâmica e insights preditivos para evitar cancelamentos.", iconColor: "linear-gradient(135deg, #88b7e1 0%, #357bed 100%)", cardColor: "linear-gradient(135deg, #88b7e122 0%, #357bed22 100%)" },
+  { icon: "💎", title: "Clientes VIP de Verdade", description: "Identifique seus melhores clientes, crie campanhas automáticas e aumente a fidelidade com gamificação.", iconColor: "linear-gradient(135deg, #00C49F 0%, #09d9e0 100%)", cardColor: "linear-gradient(135deg, #00C49F22 0%, #09d9e022 100%)" },
+  { icon: "🛡️", title: "Privacidade & Segurança", description: "LGPD pronta e criptografia nível bancário. Seus dados e os de suas clientes estão sempre protegidos.", iconColor: "linear-gradient(135deg, #ffb86c 0%, #ff6a9c 100%)", cardColor: "linear-gradient(135deg, #ffb86c22 0%, #ff6a9c22 100%)" },
   ];
 
   const antes = ["Horários vagos e dinheiro perdido", "Cancelamentos e no-shows de última hora", "Clientes que somem sem você perceber", "Planilhas e papelada consumindo seu tempo", "Dificuldade para entender seu próprio negócio"];
@@ -98,8 +98,10 @@ export default function Home() {
         {/* Cards */}
         <div className={styles.cards}>
           {cards.map((c, i) => (
-            <div key={i} className={styles.card} onClick={() => showToast(`Você clicou em "${c.title}"`)}>
-              <span className={styles.icon}>{c.icon}</span>
+            <div key={i} className={styles.card} style={{background: c.cardColor}} onClick={() => showToast(`Você clicou em "${c.title}"`)}>
+              <div className={styles.iconBox} style={{background: c.iconColor}}>
+                <span className={styles.icon}>{c.icon}</span>
+              </div>
               <h2 className={styles.cardTitle}>{c.title}</h2>
               <h2 className={styles.cardDescription}>{c.description}</h2>
             </div>
