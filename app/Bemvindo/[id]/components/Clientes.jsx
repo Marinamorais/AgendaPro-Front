@@ -28,7 +28,7 @@ import Table from './Table'; // Componente de Tabela genérico
  */
 const AppointmentHistory = memo(({ clientId, establishmentId }) => {
     // Hook useApi focado em buscar apenas os agendamentos deste cliente.
-    const { data: history, loading, error } = useApi(() => 
+    const { data: history, loading, error } = useApi(() =>
         api.appointments.getAll({ establishment_id: establishmentId, client_id: clientId }),
         [clientId, establishmentId]
     );
@@ -86,7 +86,7 @@ const ClienteDetailPanel = memo(({ cliente, establishmentId, onEdit, onDelete, o
 
     return (
         <AnimatePresence>
-            <motion.div 
+            <motion.div
                 className={styles.detailPanel}
                 key={cliente.id} // Chave para a animação funcionar na troca de clientes
                 initial={{ opacity: 0, x: 20 }}
@@ -145,8 +145,8 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
 
     // *** CORREÇÃO APLICADA AQUI ***
     // A chamada à API foi ajustada para usar a estrutura correta do SDK: `api.clients.getAll`.
-    const { data: clientes, loading, error } = useApi(() => 
-        api.clients.getAll({ 
+    const { data: clientes, loading, error } = useApi(() =>
+        api.clients.getAll({
             establishment_id: establishmentId,
             search: debouncedSearchTerm,
             sortBy: sortConfig.key,
@@ -196,7 +196,7 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
 
                  {/* Tratamento de estado de erro */}
                  {error && <p className={styles.errorState}>Ocorreu um erro ao carregar os clientes: {error}</p>}
-                 
+                
                  {/* Componente de Tabela */}
                  <Table
                      columns={columns}
@@ -213,11 +213,11 @@ const Clientes = ({ establishmentId, onAdd, onEdit, onDelete, keyForReRender }) 
             </div>
             
             {/* Painel da Direita: Detalhes do Cliente */}
-            <ClienteDetailPanel 
+            <ClienteDetailPanel
                 cliente={selectedCliente}
                 establishmentId={establishmentId}
-                onEdit={onEdit} 
-                onDelete={onDelete} 
+                onEdit={onEdit}
+                onDelete={onDelete}
                 onClose={() => setSelectedCliente(null)}
             />
         </div>
