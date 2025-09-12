@@ -188,20 +188,23 @@
 
 .comparisonCard {
   background: rgba(18,22,34,0.96);
-  border-radius: 1.2rem;
+  border-radius: 1rem;
   padding: 2.2rem 2rem;
   box-shadow: 0 2px 24px 0 rgba(0,0,0,0.18);
   text-align: left;
   border: 2px solid transparent;
   position: relative;
 }
+
 .comparisonCard:first-child {
   border-color: #ff6a9c;
-  box-shadow: 0 0 0 2px #ff6a9c33, 0 2px 24px 0 #ff6a9c11;
+  box-shadow: 0 0 0 2px #ff6a9c33, 0 7px 24px 0 #ff6a9c11;
 }
+
 .comparisonCard:last-child {
   border-color: #00C49F;
-  box-shadow: 0 0 0 2px #00C49F33, 0 2px 24px 0 #00C49F11;
+  box-shadow: 0 0 0 2px #00C49F33, 0 7px 24px 0 #00C49F11;
+  
 }
 
 .comparisonTitle {
@@ -209,11 +212,19 @@
   margin-bottom: 1rem;
 }
 
+/* remove as bolinhas brancas padrão */
+.comparisonCard ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 .comparisonCard li {
   margin: 0.7rem 0;
   font-size: 1.08rem;
   padding-left: 0.2rem;
   color: #f8faff;
+  line-height: 1.5;
 }
 
 .comparisonCard:first-child li::before {
@@ -230,144 +241,243 @@
   font-weight: bold;
 }
 
+.antes {
+  color: #ff6a9c;
+  font-weight: bold;
+  text-shadow: 0 0 7px #021b30, 0 0 16px #ff6a9c;
+}
+
+.depois {
+  color: #00C49F;
+  font-weight: bold;
+  text-shadow: 0 0 7px #021b30, 0 0 16px #00C49F;
+}
+
 /* ===== STEPS ===== */
 .stepsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2.5rem;
+  margin-top: 2.5rem;
 }
 
 .stepCard {
-  background: var(--color-neutral-white);
-  padding: 2rem;
+  background: linear-gradient(135deg, rgba(18,22,34,0.96) 80%, rgba(53,123,237,0.08) 100%);
+  color: #fff;
+  padding: 2.5rem 2rem;
   border-radius: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.stepCard:hover {
-  transform: translateY(-4px);
+  transition: transform 0.3s ease, box-shadow 0.3s;
+  position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+    margin-top: 2.5rem;
+  box-shadow: 0 0 0 4px #7535ed44, 0 8px 32px 0 #00C49F33, 0 0 32px 8px #357bed33;
 }
 
 .stepNumber {
+  width: 48px;
+  height: 48px;
   background: var(--color-primary-accent);
   color: var(--color-neutral-white);
-  font-weight: bold;
-  font-size: 1.5rem;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  margin: 0 auto 1rem;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin: 0 auto 1rem auto;
+  box-shadow: 0 2px 12px rgba(0, 196, 159, 0.4);
 }
 
-/* ===== PLANS ===== */
+.Comofuciona {
+  font-size: 2.3rem;
+  font-weight: 900;
+  margin-bottom: 2.5rem;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #88b7e1 0%, #00C49F 40%, #357bed 70%, #ff6a9c 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 12px #357bed22, 0 1px 2px #00C49F22;
+  line-height: 1.18;
+  text-align: center;
+}
+
+.stepTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  color: #f8faff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 8px rgba(53,123,237,0.12), 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.stepDescription {
+  font-size: 1rem;
+  opacity: 0.85;
+  color: #e6e9ef;
+  line-height: 1.4;
+  font-family: monospace;
+}
+
 .plans {
   text-align: center;
+  margin: 2rem 1rem;
 }
 
+.heading {
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #9fc3ff;
+  margin-bottom: 2.5rem;
+}
+
+/* grid */
 .planCards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2.5rem;
+  align-items: start;
 }
 
+/* card base */
 .planCard {
-  background: var(--color-neutral-white);
-  border-radius: 1.5rem;
-  padding: 2rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.planCard:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
-}
-
-.popular {
-  border: 2px solid var(--color-primary-gold);
-}
-
-.popularBadge {
-  background: var(--color-primary-gold);
-  color: var(--color-primary-dark);
-  padding: 0.2rem 0.8rem;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  display: inline-block;
-  margin-bottom: 0.8rem;
-  font-weight: 600;
-}
-
-.planPrice {
-  font-size: 1.6rem;
-  font-weight: bold;
-  color: var(--color-primary-accent);
-  margin: 0.5rem 0 1rem;
-}
-
-.planButton {
-  background: var(--color-primary-accent);
-  color: white;
-  padding: 0.8rem 1.5rem;
-  border-radius: 999px;
-  border: none;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.3s ease;
-}
-
-.planButton:hover {
-  background: #00b28e;
-}
-
-/* ===== TESTIMONIALS ===== */
-.testimonialCards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  margin-top: 2rem;
-}
-
-.testimonialCard {
-  background: var(--color-neutral-light);
-  padding: 2rem;
-  border-radius: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  background: linear-gradient(180deg, rgba(8,12,20,0.9), rgba(18,22,34,0.86));
+  border-radius: 1.25rem;
+  padding: 2.2rem;
+  color: #e6eefc;
+  border: 2px solid transparent;
+  box-shadow: 0 6px 30px rgba(2,6,14,0.6);
+  min-height: 420px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start; /* titles left like in your reference */
   gap: 1rem;
+  position: relative;
 }
 
-.rating {
-  color: var(--color-primary-gold);
-  font-size: 1.2rem;
+/* Popular badge positioned at top center */
+.popularBadge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  box-shadow: 0 6px 20px rgba(53,123,237,0.18);
+  background: linear-gradient(90deg, #31c2f5 0%, #ff73c6 100%);
+  color: white;
 }
 
-.clientInfo {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
+/* Title / price / description always use these classes;
+   cor específica por tipo é aplicada abaixo via .planCard.TYPE .planTitle */
+.planTitle {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0;
+ 
+}
+.planPrice {
+  font-size: 1.7rem;
+  font-weight: 900;
+  margin: 0.2rem 0 0.8rem 0;
+}
+.planDescription {
+  opacity: 0.9;
+  margin-bottom: 0.6rem;
+  color: rgba(230,238,252,0.9);
 }
 
-.avatar {
-  background: var(--color-primary-accent);
-  color: var(--color-neutral-white);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
+/* features */
+.features{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  flex: 1 0 auto;
 }
+.featureItem{
+  display:flex;
+  gap:0.75rem;
+  align-items:center;
+  margin:0.6rem 0;
+  font-size:1rem;
+  color: rgba(230,238,252,0.95);
+}
+.featureIcon{
+  min-width:28px;
+  height:28px;
+  display:inline-grid;
+  place-items:center;
+  border-radius:50%;
+  background: rgba(0,0,0,0.25);
+  color:#3be38a;
+  font-weight:700;
+  box-shadow:0 2px 8px rgba(0,0,0,0.25);
+}
+
+/* button base */
+.planButton{
+  margin-top: 0.6rem;
+  align-self: stretch;
+  padding: 1rem 1.6rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+  cursor: pointer;
+  color: white;
+}
+
+/* === CORES FIXAS POR TIPO (aplicadas pelo pai) === */
+
+/* STARTER (rosa) */
+.planCard.starter{
+  border-color: rgba(255,106,156,0.18);
+  box-shadow: 0 6px 30px rgba(53,8,50,0.5);
+}
+.planCard.starter .planTitle,
+.planCard.starter .planPrice{ color: #ff6a9c; }
+.planCard.starter .planButton{
+  background: linear-gradient(90deg, #ff6a9c 0%, #ffb6e6 100%);
+}
+
+/* PROFISSIONAL (azul) */
+.planCard.profissional{
+  border-color: rgba(53,123,237,0.12);
+  box-shadow: 0 6px 30px rgba(8,36,54,0.55);
+}
+.planCard.profissional .planTitle,
+.planCard.profissional .planPrice{ color: #31d6ff; /* tom azul-esverdeado */ }
+.planCard.profissional .planButton{
+  background: linear-gradient(90deg, #2bd8f6 0%, #4b9cf8 100%);
+}
+
+/* PREMIUM (verde) */
+.planCard.premium{
+  border-color: rgba(0,196,159,0.12);
+  box-shadow: 0 6px 30px rgba(6,40,36,0.5);
+}
+.planCard.premium .planTitle,
+.planCard.premium .planPrice{ color: #39e07a; }
+.planCard.premium .planButton{
+  background: linear-gradient(90deg, #00c49f 0%, #5be6b9 100%);
+}
+
+/* small responsiveness */
+@media (max-width: 720px){
+  .planCard{ align-items: center; text-align:center; min-height: auto; }
+  .featureItem{ justify-content: center; }
+  .planButton{ align-self: center; width: 80%; }
+}
+
+
 
 /* ===== FAQ ===== */
 .faqList {

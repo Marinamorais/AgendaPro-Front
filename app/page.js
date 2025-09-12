@@ -53,11 +53,34 @@ export default function Home() {
     { question: "E meus dados?", answer: "Protegidos! Seguimos a LGPD e usamos criptografia de nível bancário para garantir sua segurança." },
   ];
 
+   // <-- ATENÇÃO: agora cada plano tem o campo `type` (starter | profissional | premium) -->
   const plans = [
-    { name: "Starter", price: "R$ 29,99/mês", description: "Perfeito para quem trabalha sozinho", features: ["Até 2 usuários", "Agendamento via WhatsApp", "Lembretes automáticos"] },
-    { name: "Profissional", price: "R$ 54/mês", description: "Para salões que querem crescer", features: ["Até 5 usuários", "Insights preditivos", "Campanhas automáticas"], popular: true },
-    { name: "Premium", price: "R$ 83/mês", description: "Para quem quer dominar o mercado", features: ["Até 10 usuários", "Gestão financeira integrada", "Precificação dinâmica"] },
+    {
+      type: "starter",
+      name: "Starter",
+      price: "R$ 29,99/mês",
+      description: "Perfeito para quem trabalha sozinho",
+      features: ["Até 2 usuários", "Agendamento via WhatsApp", "Lembretes automáticos"],
+      popular: false,
+    },
+    {
+      type: "profissional",
+      name: "Profissional",
+      price: "R$ 54/mês",
+      description: "Para salões que querem crescer",
+      features: ["Até 5 usuários", "Insights preditivos", "Campanhas automáticas"],
+      popular: true,
+    },
+    {
+      type: "premium",
+      name: "Premium",
+      price: "R$ 83/mês",
+      description: "Para quem quer dominar o mercado",
+      features: ["Até 10 usuários", "Gestão financeira integrada", "Precificação dinâmica"],
+      popular: false,
+    },
   ];
+
 
   const testimonials = [
     { name: "Ana Silva", business: "Studio Ana Beauty", feedback: "Minha agenda nunca ficou tão cheia. E o melhor: sem eu precisar ligar para ninguém!", rating: 5, avatar: "A" },
@@ -113,11 +136,11 @@ export default function Home() {
           <h2>Antes vs Depois</h2>
           <div className={styles.comparisonGrid}>
             <div className={styles.comparisonCard}>
-              <h3>🚫 Antes</h3>
+              <h3 className={styles.antes}>🚫 Antes</h3>
               <ul>{antes.map((a, i) => <li key={i}>{a}</li>)}</ul>
             </div>
             <div className={styles.comparisonCard}>
-              <h3>✅ Depois</h3>
+              <h3 className={styles.depois}>✅ Depois</h3>
               <ul>{depois.map((d, i) => <li key={i}>{d}</li>)}</ul>
             </div>
           </div>
@@ -125,7 +148,7 @@ export default function Home() {
 
         {/* Steps */}
         <section className={styles.steps}>
-          <h2>Como Funciona</h2>
+          <h2 className={styles.Comofuciona}>Como Funciona</h2>
           <div className={styles.stepsGrid}>
             {passos.map((p, i) => (
               <div key={i} className={styles.stepCard}>
@@ -138,21 +161,41 @@ export default function Home() {
         </section>
 
         {/* Plans */}
+      {/* Plans */}
         <section className={styles.plans}>
-          <h2>Escolha seu Plano</h2>
+          <h2 className={styles.heading}>Escolha seu Plano</h2>
+
           <div className={styles.planCards}>
             {plans.map((plan, i) => (
-              <div key={i} className={`${styles.planCard} ${plan.popular ? styles.popular : ""}`}>
-                {plan.popular && <span className={styles.popularBadge}>🔥 Mais Popular</span>}
-                <h3>{plan.name}</h3>
+              <div
+                key={i}
+                className={`${styles.planCard} ${styles[plan.type]} ${plan.popular ? styles.popular : ""}`}
+              >
+                {plan.popular && (
+                  <span className={styles.popularBadge}>🔥 Mais Popular</span>
+                )}
+
+                <h3 className={styles.planTitle}>{plan.name}</h3>
                 <p className={styles.planPrice}>{plan.price}</p>
-                <p>{plan.description}</p>
-                <ul>{plan.features.map((f, idx) => <li key={idx}>{f}</li>)}</ul>
-                <button className={styles.planButton} onClick={() => openAuthModal('register')}>Começar Agora</button>
+                <p className={styles.planDescription}>{plan.description}</p>
+
+                <ul className={styles.features}>
+                  {plan.features.map((f, idx) => (
+                    <li key={idx} className={styles.featureItem}>
+                      <span className={styles.featureIcon}>✔</span>
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <button className={styles.planButton} onClick={() => openAuthModal("register")}>
+                  Começar Agora
+                </button>
               </div>
             ))}
           </div>
         </section>
+        {/* End Plans */}  
 
         {/* Testimonials */}
         <section className={styles.testimonials}>
