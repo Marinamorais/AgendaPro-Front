@@ -1,4 +1,3 @@
-// marinamorais/agendapro-front/AgendaPro-Front-e89f19b6f1c85c2718d910d6f3e87d7772852553/app/Bemvindo/[id]/components/DashboardComponent.jsx
 
 "use client";
 import React, { useState } from 'react';
